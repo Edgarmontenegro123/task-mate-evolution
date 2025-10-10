@@ -1,13 +1,26 @@
 import React, {useState} from 'react';
-import {View, Text, TextInput, Button, FlatList, StyleSheet} from 'react-native';
+import {View, Text, TextInput, Button, FlatList, StyleSheet, Alert} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import TaskItem from '../components/TaskItem';
 import {Task} from '../types/task';
-import {Alert} from 'react-native';
+
+type RootStackParamList = {
+    Home: undefined;
+    DeletedTasks: {
+        deletedTasks: Task[];
+        onRecover: (taskId: string) => void;
+    };
+}
+
+type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
 const HomeScreen: React.FC = () => {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [newTask, setNewTask] = useState('');
     const [selectedColor, setSelectedColor] = useState('#FF6347');
+    const [deletedTasks, setDeletedTasks] = useState<Task[]>([]);
+    const navigation = useNavigation<HomeScreenNavigationProp>();
 
 
     const addTask = () => {
@@ -40,12 +53,24 @@ const HomeScreen: React.FC = () => {
                     text: 'Eliminar',
                     style: 'destructive',
                     onPress: () => {
+                        const deleted = tasks.find(task => task.id === id);
+                        if(deleted) {
+                            setDeletedTasks(prev => [deleted, ...prev])
+                        }
                         setTasks(prev => prev.filter(task => task.id !== id));
                     }
                 }
             ],
             {cancelable: true}
         )
+    }
+
+    const handleRecoverTask = (taskId: string) => {
+        const recovered = deletedTasks.find(task => task.id === taskId);
+        if(recovered) {
+            setTasks(prev => [recovered, ...prev]);
+            setDeletedTasks(prev => prev.filter(task => task.id !== taskId));
+        }
     }
 
     return(
@@ -100,6 +125,18 @@ const HomeScreen: React.FC = () => {
                     </Text>
                 }
                 />
+            <View style = {{marginBottom: 30}}>
+                <Button
+                    title = 'Ver notas eliminadas.'
+                    onPress = {() => {
+                        navigation.navigate('DeletedTasks', {
+                            deletedTasks,
+                            onRecover: handleRecoverTask,
+                        })
+                    }}
+                />
+            </View>
+
         </View>
     )
 }
