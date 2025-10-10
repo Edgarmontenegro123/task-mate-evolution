@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, Text, TouchableOpacity} from 'react-native';
+import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {Task} from '../types/task';
 import {Ionicons} from '@expo/vector-icons';
 
@@ -9,7 +9,7 @@ type TaskItemProps = {
     onDelete: (id: string) => void;
 }
 
-export const TaskItem: React.FC<TaskItemProps> = ({task, onToggle, onDelete}) => {
+const TaskItem: React.FC<TaskItemProps> = ({task, onToggle, onDelete}) => {
     return (
         <View style={{
             flexDirection: 'row',
@@ -23,6 +23,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({task, onToggle, onDelete}) =>
             shadowOffset: {width: 0, height: 2},
             shadowRadius: 4,
             elevation: 3,
+            width: '100%',
         }}>
 
             <TouchableOpacity
@@ -37,20 +38,15 @@ export const TaskItem: React.FC<TaskItemProps> = ({task, onToggle, onDelete}) =>
 
             <View style = {{flex: 1}}>
                 <Text
-                    style={{
-                        fontSize: 16,
-                        textDecorationLine: task.completed ? 'line-through' : 'none',
-                        color: task.completed ? '#888' : '#000',
-                    }}>
+                    style={[
+                        styles.taskText,
+                        {
+                            textDecorationLine: task.completed ? 'line-through' : 'none',
+                            color: task.color,
+                        }
+                    ]}>
                     {task.text}
                 </Text>
-                <View style = {{
-                    width: 30,
-                    height: 6,
-                    borderRadius: 4,
-                    backgroundColor: task.color,
-                    marginTop: 4,
-                }}/>
             </View>
             <TouchableOpacity
                 onPress={() => onDelete(task.id)}>
@@ -62,3 +58,11 @@ export const TaskItem: React.FC<TaskItemProps> = ({task, onToggle, onDelete}) =>
         </View>
     )
 }
+
+export default TaskItem;
+
+const styles = StyleSheet.create({
+    taskText: {
+        fontSize: 16,
+    }
+})
