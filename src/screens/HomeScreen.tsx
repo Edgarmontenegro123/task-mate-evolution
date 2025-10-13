@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {View, Text, TextInput, Button, FlatList, StyleSheet, Alert} from 'react-native';
+import {View, Text, TextInput, Button, StyleSheet, Alert, FlatList} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import TaskItem from '../components/TaskItem';
@@ -75,7 +75,7 @@ const HomeScreen: React.FC = () => {
 
     return(
         <View style = {styles.container}>
-            <Text style={styles.title}>TaskMate 📋</Text>
+            <Text style={styles.title}>Task Mate Evolution 📋</Text>
             <View style={styles.inputContainer}>
                 <TextInput
                     style = {styles.input}
@@ -114,11 +114,13 @@ const HomeScreen: React.FC = () => {
                 data={tasks}
                 keyExtractor={(item) => item.id}
                 renderItem={({item}) => (
-                    <TaskItem task = {item}
-                              onToggle = {toggleTask}
-                              onDelete = {deleteTask}
-                    />
+                    <TaskItem
+                        task = {item}
+                        onToggle = {toggleTask}
+                        onDelete = {deleteTask}
+                        />
                 )}
+
                 ListEmptyComponent={
                     <Text style={styles.emptyText}>
                         Todavía no hay tareas cargadas, agrega una nueva tarea!
@@ -136,7 +138,6 @@ const HomeScreen: React.FC = () => {
                     }}
                 />
             </View>
-
         </View>
     )
 }
