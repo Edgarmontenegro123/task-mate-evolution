@@ -11,9 +11,17 @@ type TaskItemProps = {
     isActive?: boolean;
 }
 
-const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onDelete}) => {
+const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onDelete, drag, isActive}) => {
     return (
         <View style={styles.view}>
+            <TouchableOpacity
+                onLongPress={drag}
+                disabled={!drag}
+                style = {[
+                    styles.container,
+                    {backgroundColor: isActive ? '#e0e0e0' : '#fff'},
+                ]}
+                >
                 <TouchableOpacity
                     onPress={() => onToggle(task.id)}
                     style={{ marginRight: 10 }}
@@ -46,6 +54,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onDelete}) => {
                         color='#FF6347'
                     />
                 </TouchableOpacity>
+            </TouchableOpacity>
         </View>
     )
 }

@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
-import {View, Text, TextInput, Button, StyleSheet, Alert, FlatList} from 'react-native';
+import {View, Text, TextInput, Button, StyleSheet, Alert} from 'react-native';
+import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import TaskItem from '../components/TaskItem';
@@ -73,6 +74,16 @@ const HomeScreen: React.FC = () => {
         }
     }
 
+    const renderItem = ({ item, drag, isActive }: RenderItemParams<Task>) => (
+        <TaskItem
+            task={item}
+            onToggle={toggleTask}
+            onDelete={deleteTask}
+            drag={drag}
+            isActive={isActive}
+        />
+    );
+
     return(
         <View style = {styles.container}>
             <Text style={styles.title}>Task Mate Evolution 📋</Text>
@@ -110,23 +121,17 @@ const HomeScreen: React.FC = () => {
                 ))}
             </View>
 
-            <FlatList
+            <DraggableFlatList
                 data={tasks}
                 keyExtractor={(item) => item.id}
-                renderItem={({item}) => (
-                    <TaskItem
-                        task = {item}
-                        onToggle = {toggleTask}
-                        onDelete = {deleteTask}
-                        />
-                )}
-
+                renderItem={renderItem}
+                onDragEnd={({data}) => setTasks(data)}
                 ListEmptyComponent={
                     <Text style={styles.emptyText}>
                         Todavía no hay tareas cargadas, agrega una nueva tarea!
                     </Text>
                 }
-                />
+                    />
             <View style = {{marginBottom: 30}}>
                 <Button
                     title = 'Ver notas eliminadas.'
