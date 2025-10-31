@@ -3,14 +3,12 @@ import { Task } from '../types/task';
 
 const TASKS_KEY = '@taskmate:tasks';
 
-// Cargar tareas (devuelve array vacío si no hay nada)
 export const loadTasks = async (): Promise<Task[]> => {
     try {
         const raw = await AsyncStorage.getItem(TASKS_KEY);
         if (!raw) return [];
         const parsed = JSON.parse(raw) as Task[];
 
-        // Validación ligera: asegurar formato mínimo
         if (!Array.isArray(parsed)) return [];
         return parsed;
     } catch (error) {
@@ -19,7 +17,6 @@ export const loadTasks = async (): Promise<Task[]> => {
     }
 };
 
-// Guardar tareas (sobrescribe)
 export const saveTasks = async (tasks: Task[]): Promise<void> => {
     try {
         await AsyncStorage.setItem(TASKS_KEY, JSON.stringify(tasks));

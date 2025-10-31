@@ -1,12 +1,13 @@
 import React, {useState, useEffect} from 'react';
 import {View, Text, Button, FlatList, StyleSheet, Alert} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {RouteProp, useRoute} from '@react-navigation/native';
 import {Task} from '../types/task';
 
 type RootStackParamList = {
     DeletedTasks: {
-        deletedTasks: Task[];
-        onRecover: (id: string) => void;
+        deletedTasks?: Task[];
+        onRecover?: (id: string) => void;
     }
 }
 
@@ -14,15 +15,29 @@ type DeletedTasksRouteProp = RouteProp<RootStackParamList, 'DeletedTasks'>
 
 const DeletedTasksScreen: React.FC = () => {
     const route = useRoute<DeletedTasksRouteProp>();
-    const {deletedTasks: initialDeletedTasks, onRecover} = route.params;
+    const initialDeletedTasks = route.params?.deletedTasks || [];
+    const onRecover = route.params?.onRecover;
+    /*const {deletedTasks: initialDeletedTasks, onRecover} = route.params;*/
     /*const {deletedTasks, onRecover} = route.params;*/
     const [deletedTasks, setDeletedTasks] = useState<Task[]>(initialDeletedTasks);
 
     useEffect(() => {
-        setDeletedTasks(initialDeletedTasks);
+        const loadDeletedFromStorage = async () => {
+            try {
+                if(initialDeletedTasks.length === 0) {
+                    const savedDeleted = await AsyncStorage.getItem('deletedTasks');
+                    if(savedDeleted) setDeletedTasks(JSON.parse(savedDeleted));
+                } else {
+                    setDeletedTasks(initialDeletedTasks);
+                }
+            } catch (error) {
+                console.error('Error al cargar notas eliminadas: ', error);
+            }
+        }
+        loadDeletedFromStorage();
     }, [initialDeletedTasks]);
 
-    const handleRecoverPress = (id: string) => {
+    const handleRecoverPress = async (id: string) => {
         const taskToRecover = deletedTasks.find((t) => t.id === id);
         if(!taskToRecover) return;
 
@@ -36,9 +51,18 @@ const DeletedTasksScreen: React.FC = () => {
                 },
                 {
                     text: 'Recuperar',
-                    onPress: () => {
-                        onRecover(id);
-                        setDeletedTasks((prev) => prev.filter((t) => t.id !== id));
+                    onPress: async () => {
+                        if(onRecover) {
+                            onRecover(id);
+                        }
+                        const updatedDeleted = deletedTasks.filter(t => t.id !== id);
+                        setDeletedTasks(updatedDeleted);
+
+                        try {
+                            await AsyncStorage.setItem('deletedTasks', JSON.stringify(updatedDeleted));
+                        } catch (error) {
+                            console.error('Error al guardar deletedTasks: ', error);
+                        }
                     }
                 }
             ],

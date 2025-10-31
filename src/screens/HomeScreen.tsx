@@ -1,6 +1,7 @@
-import React, {useState} from 'react';
-import {View, Text, TextInput, Button, StyleSheet, Alert} from 'react-native';
+import React, {useState, useEffect} from 'react';
 import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {View, Text, TextInput, Button, StyleSheet, Alert} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import TaskItem from '../components/TaskItem';
@@ -22,6 +23,33 @@ const HomeScreen: React.FC = () => {
     const [selectedColor, setSelectedColor] = useState('#FF6347');
     const [deletedTasks, setDeletedTasks] = useState<Task[]>([]);
     const navigation = useNavigation<HomeScreenNavigationProp>();
+
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                const savedTasks = await AsyncStorage.getItem('tasks');
+                const savedDeleted = await AsyncStorage.getItem('deletedTasks');
+                if(savedTasks) setTasks(JSON.parse(savedTasks));
+                if(savedDeleted) setDeletedTasks(JSON.parse(savedDeleted));
+            } catch (error) {
+                console.error('Error al cargar datos: ', error);
+            }
+        }
+        loadData();
+    }, []);
+
+    // Guardar automáticamente tasks y deletedTasks cada vez que cambien
+    useEffect(() => {
+        const saveData = async () => {
+            try {
+                await AsyncStorage.setItem('tasks', JSON.stringify(tasks));
+                await AsyncStorage.setItem('deletedTasks', JSON.stringify(deletedTasks));
+            } catch (error) {
+                console.error('Error al guardar datos: ', error);
+            }
+        }
+        saveData();
+    }, [tasks, deletedTasks]);
 
 
     const addTask = () => {
