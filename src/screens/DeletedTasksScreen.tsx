@@ -109,6 +109,7 @@ const DeletedTasksScreen: React.FC = () => {
                 }}
                 contentContainerStyle = {styles.listContent}
                 ListEmptyComponent={<Text>No hay notas eliminadas.</Text>}
+                showsVerticalScrollIndicator={true}
                 />
         </View>
     )
@@ -126,7 +127,7 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     listContent: {
-      paddingBottom: 16,
+      paddingBottom: 100,
     },
     taskContainer: {
         flexDirection: 'row',

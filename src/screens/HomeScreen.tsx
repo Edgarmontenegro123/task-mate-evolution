@@ -118,7 +118,6 @@ const HomeScreen: React.FC = () => {
 
     return(
         <View style = {styles.container}>
-            {/*<Text style={styles.title}>Task Mate Evolution 📋</Text>*/}
             <Image
                 source={Logo}
                 style={styles.logo}
@@ -158,18 +157,21 @@ const HomeScreen: React.FC = () => {
                 ))}
             </View>
 
-            <DraggableFlatList
-                data={tasks}
-                keyExtractor={(item) => item.id}
-                renderItem={renderItem}
-                onDragEnd={({data}) => setTasks(data)}
-                ListEmptyComponent={
-                    <Text style={styles.emptyText}>
-                        Todavía no hay tareas cargadas, agrega una nueva tarea!
-                    </Text>
-                }
-                    />
-            <View style = {{marginBottom: 30}}>
+            <View style = {styles.listContainer}>
+                <DraggableFlatList
+                    data={tasks}
+                    keyExtractor={(item) => item.id}
+                    renderItem={renderItem}
+                    onDragEnd={({data}) => setTasks(data)}
+                    ListEmptyComponent={
+                        <Text style={styles.emptyText}>
+                            Todavía no hay tareas cargadas, agrega una nueva tarea!
+                        </Text>
+                    }
+                />
+            </View>
+
+            <View style = {styles.fixedButtonContainer}>
                 <Button
                     title = 'Ver notas eliminadas.'
                     onPress = {() => {
@@ -219,6 +221,10 @@ const styles = StyleSheet.create({
         marginBottom: 12,
         color: '#333',
     },
+    listContainer: {
+      flex: 1,
+      marginBottom: 70,
+    },
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -253,6 +259,20 @@ const styles = StyleSheet.create({
     colorPressArea: {
         width: '100%',
         height: '100%',
+    },
+    fixedButtonContainer: {
+        position: 'absolute',
+        bottom: 20,
+        alignSelf: 'center',
+        width: '90%',
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        paddingVertical: 6,
+        elevation: 5, // sombra Android
+        shadowColor: '#000',
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 2 },
     }
 })
 
