@@ -1,4 +1,5 @@
 import React, {useState, useEffect} from 'react';
+import {Image} from 'react-native';
 import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {View, Text, TextInput, Button, StyleSheet, Alert} from 'react-native';
@@ -6,14 +7,9 @@ import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import TaskItem from '../components/TaskItem';
 import {Task} from '../types/task';
+import {RootStackParamList} from '../navigation/types';
+import Logo from '../../assets/Logo_letra_negra.png';
 
-type RootStackParamList = {
-    Home: undefined;
-    DeletedTasks: {
-        deletedTasks: Task[];
-        onRecover: (taskId: string) => void;
-    };
-}
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -27,6 +23,14 @@ const HomeScreen: React.FC = () => {
     useEffect(() => {
         const loadData = async () => {
             try {
+                /*const rawTasks = await AsyncStorage.getItem('tasks');
+                const rawDeleted = await AsyncStorage.getItem('deletedTasks');
+                console.log('Storage Debug: ');
+                console.log('Tasks: ', rawTasks);
+                console.log('DeletedTasks: ', rawDeleted);
+
+                if(rawTasks) setTasks(JSON.parse(rawTasks));
+                if(rawDeleted) setDeletedTasks(JSON.parse(rawDeleted));*/
                 const savedTasks = await AsyncStorage.getItem('tasks');
                 const savedDeleted = await AsyncStorage.getItem('deletedTasks');
                 if(savedTasks) setTasks(JSON.parse(savedTasks));
@@ -114,7 +118,12 @@ const HomeScreen: React.FC = () => {
 
     return(
         <View style = {styles.container}>
-            <Text style={styles.title}>Task Mate Evolution 📋</Text>
+            {/*<Text style={styles.title}>Task Mate Evolution 📋</Text>*/}
+            <Image
+                source={Logo}
+                style={styles.logo}
+                resizeMode={'contain'}
+            />
             <View style={styles.inputContainer}>
                 <TextInput
                     style = {styles.input}
@@ -170,6 +179,21 @@ const HomeScreen: React.FC = () => {
                         })
                     }}
                 />
+                {/*<Button
+                    title="🧹 Limpiar notas eliminadas"
+                    color="red"
+                    onPress={async () => {
+                        try {
+                            await AsyncStorage.removeItem('deletedTasks');
+                            setDeletedTasks([]); // actualiza el estado local también
+                            console.log('✅ Clave deletedTasks eliminada del storage');
+                            Alert.alert('Storage limpio', 'Se eliminaron las notas eliminadas almacenadas.');
+                        } catch (error) {
+                            console.error('Error al limpiar deletedTasks:', error);
+                        }
+                    }}
+                />*/}
+
             </View>
         </View>
     )
@@ -182,6 +206,12 @@ const styles = StyleSheet.create({
         paddingTop: 30,
         backgroundColor: '#F8F9FA',
         marginTop: 30,
+    },
+    logo: {
+      width: 200,
+      height: 80,
+      alignSelf: 'center',
+      marginVertical: 10,
     },
     title: {
         fontSize: 24,

@@ -3,13 +3,8 @@ import {View, Text, Button, FlatList, StyleSheet, Alert} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {RouteProp, useRoute} from '@react-navigation/native';
 import {Task} from '../types/task';
+import {RootStackParamList} from "../navigation/types";
 
-type RootStackParamList = {
-    DeletedTasks: {
-        deletedTasks?: Task[];
-        onRecover?: (id: string) => void;
-    }
-}
 
 type DeletedTasksRouteProp = RouteProp<RootStackParamList, 'DeletedTasks'>
 
@@ -17,8 +12,6 @@ const DeletedTasksScreen: React.FC = () => {
     const route = useRoute<DeletedTasksRouteProp>();
     const initialDeletedTasks = route.params?.deletedTasks || [];
     const onRecover = route.params?.onRecover;
-    /*const {deletedTasks: initialDeletedTasks, onRecover} = route.params;*/
-    /*const {deletedTasks, onRecover} = route.params;*/
     const [deletedTasks, setDeletedTasks] = useState<Task[]>(initialDeletedTasks);
 
     useEffect(() => {
