@@ -1,12 +1,13 @@
-import React, {useState, useEffect} from 'react';
-import {View, Text, Button, FlatList, StyleSheet, Alert} from 'react-native';
+import React, {useState, useEffect, useCallback} from 'react';
+import {View, Text, Button, StyleSheet, Alert, TouchableOpacity} from 'react-native';
+import DraggableFlatList, {RenderItemParams} from 'react-native-draggable-flatlist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {RouteProp, useRoute} from '@react-navigation/native';
 import {Task} from '../types/task';
 import {RootStackParamList} from "../navigation/types";
 
 
-type DeletedTasksRouteProp = RouteProp<RootStackParamList, 'DeletedTasks'>
+type DeletedTasksRouteProp = RouteProp<RootStackParamList, 'DeletedTasks'>;
 
 const DeletedTasksScreen: React.FC = () => {
     const route = useRoute<DeletedTasksRouteProp>();
@@ -30,6 +31,14 @@ const DeletedTasksScreen: React.FC = () => {
         loadDeletedFromStorage();
     }, [initialDeletedTasks]);
 
+    const persist = useCallback(async (data: Task[]) => {
+        try {
+            await AsyncStorage.setItem('deletedTasks', JSON.stringify(data));
+        } catch (error) {
+            console.error('Error al cargar notas eliminadas: ', error);
+        }
+    }, []);
+
     const handleRecoverPress = async (id: string) => {
         const taskToRecover = deletedTasks.find((t) => t.id === id);
         if(!taskToRecover) return;
@@ -50,6 +59,7 @@ const DeletedTasksScreen: React.FC = () => {
                         }
                         const updatedDeleted = deletedTasks.filter(t => t.id !== id);
                         setDeletedTasks(updatedDeleted);
+                        await persist(updatedDeleted);
 
                         try {
                             await AsyncStorage.setItem('deletedTasks', JSON.stringify(updatedDeleted));
@@ -63,19 +73,41 @@ const DeletedTasksScreen: React.FC = () => {
         )
     }
 
+    const renderItem = ({item, drag, isActive} : RenderItemParams<Task>) => (
+        <TouchableOpacity
+            activeOpacity={0.9}
+            onLongPress={drag}
+            disabled={isActive}
+            style={[styles.taskContainer, isActive && styles.activeItem]}>
+
+            <View style={styles.textWrapper}>
+                <Text
+                    style={[styles.taskText, { color: item.color }]}
+                    numberOfLines={3}
+                    ellipsizeMode="tail"
+                >
+                    {item.text}
+                </Text>
+            </View>
+
+            <View style={styles.buttonWrapper}>
+                <Button title="Recuperar" onPress={() => handleRecoverPress(item.id)} />
+            </View>
+        </TouchableOpacity>
+    )
+
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Historial de notas eliminadas</Text>
-            <FlatList
+            <DraggableFlatList
                 data={deletedTasks}
                 keyExtractor={(item) => item.id}
-                renderItem={({item}) => (
-                    <View style = {styles.taskContainer}>
-                        <Text style={[styles.taskText, {color: item.color}]}>{item.text}</Text>
-                        <Button title='Recuperar'
-                                onPress={() => handleRecoverPress(item.id)} />
-                    </View>
-                )}
+                renderItem={renderItem}
+                onDragEnd={({data}) => {
+                    setDeletedTasks(data);
+                    persist(data);
+                }}
+                contentContainerStyle = {styles.listContent}
                 ListEmptyComponent={<Text>No hay notas eliminadas.</Text>}
                 />
         </View>
@@ -93,16 +125,38 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginBottom: 12,
     },
+    listContent: {
+      paddingBottom: 16,
+    },
     taskContainer: {
         flexDirection: 'row',
+        alignItems: 'center',
         justifyContent: 'space-between',
+        gap: 8,
         marginBottom: 10,
         padding: 8,
         backgroundColor: '#fff',
         borderRadius: 8,
+        shadowColor: '#000',
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 2 },
+        elevation: 2,
+    },
+    activeItem: {
+        opacity: 0.85,
+        transform: [{scale: 0.99}],
+    },
+    textWrapper: {
+      flex: 1,
+      paddingRight: 8,
     },
     taskText: {
         fontSize: 16,
+        flexShrink: 1,
+    },
+    buttonWrapper: {
+        alignSelf: 'center',
     }
 })
 
