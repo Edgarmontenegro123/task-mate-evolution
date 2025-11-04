@@ -1,5 +1,4 @@
-import React, {useState, useEffect} from 'react';
-import {Image} from 'react-native';
+import React, {useState, useEffect, useRef} from 'react';
 import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {View, Text, TextInput, Button, StyleSheet, Alert} from 'react-native';
@@ -8,7 +7,6 @@ import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import TaskItem from '../components/TaskItem';
 import {Task} from '../types/task';
 import {RootStackParamList} from '../navigation/types';
-import Logo from '../../assets/Logo_letra_negra.png';
 
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
@@ -16,9 +14,12 @@ type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'H
 const HomeScreen: React.FC = () => {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [newTask, setNewTask] = useState('');
-    const [selectedColor, setSelectedColor] = useState('#FF6347');
+    const [selectedColor, setSelectedColor] = useState('#1E90FF');
     const [deletedTasks, setDeletedTasks] = useState<Task[]>([]);
+    const [inputHeight, setInputHeight] = useState(40);
+    const inputRef = useRef<TextInput>(null);
     const navigation = useNavigation<HomeScreenNavigationProp>();
+
 
     useEffect(() => {
         const loadData = async () => {
@@ -59,13 +60,16 @@ const HomeScreen: React.FC = () => {
     const addTask = () => {
         if(newTask.trim() === '') return;
 
-        const task: Task = {id: Date.now().toString(),
-                            text: newTask,
-                            completed: false,
-                            color: selectedColor,
-                            createdAt: Date.now()};
+        const task: Task = {
+            id: Date.now().toString(),
+            text: newTask,
+            completed: false,
+            color: selectedColor,
+            createdAt: Date.now()
+        };
         setTasks(prev => [task, ...prev]);
         setNewTask('');
+        setInputHeight(40); // eliminar si no funciona
     }
 
     const toggleTask = (id: string) => {
@@ -87,9 +91,7 @@ const HomeScreen: React.FC = () => {
                     style: 'destructive',
                     onPress: () => {
                         const deleted = tasks.find(task => task.id === id);
-                        if(deleted) {
-                            setDeletedTasks(prev => [deleted, ...prev])
-                        }
+                        if(deleted) setDeletedTasks(prev => [deleted, ...prev])
                         setTasks(prev => prev.filter(task => task.id !== id));
                     }
                 }
@@ -106,6 +108,11 @@ const HomeScreen: React.FC = () => {
         }
     }
 
+    const setCaretToStart = () => {
+        inputRef.current?.setNativeProps({ selection: { start: 0, end: 0}});
+    }
+
+
     const renderItem = ({ item, drag, isActive }: RenderItemParams<Task>) => (
         <TaskItem
             task={item}
@@ -118,18 +125,21 @@ const HomeScreen: React.FC = () => {
 
     return(
         <View style = {styles.container}>
-            <Image
-                source={Logo}
-                style={styles.logo}
-                resizeMode={'contain'}
-            />
             <View style={styles.inputContainer}>
                 <TextInput
-                    style = {styles.input}
+                    style = {[styles.input, {height: Math.min(inputHeight, 120)}]}
                     placeholder= 'Agrega una nueva tarea!'
                     value = {newTask}
                     onChangeText = {setNewTask}
-                    onSubmitEditing={addTask}
+                    multiline
+                    scrollEnabled={true}
+                    textAlignVertical={'top'}
+                    onContentSizeChange={(e) => {
+                        const newHeight = e.nativeEvent.contentSize.height;
+                        setInputHeight(Math.min(newHeight, 120))
+                    }}
+                    onFocus={() => setCaretToStart()}
+                    ref = {inputRef}
                 />
                 <Button
                     title='Agregar'
@@ -145,7 +155,7 @@ const HomeScreen: React.FC = () => {
                             {
                                 backgroundColor: color,
                                 borderWidth: selectedColor === color ? 2 : 0,
-                                borderColor: selectedColor === color ? '#000' : 'transparent',
+                                borderColor: selectedColor === color ? '#999' : 'transparent',
                             }
                         ]}
                     >
@@ -168,6 +178,7 @@ const HomeScreen: React.FC = () => {
                             Todavía no hay tareas cargadas, agrega una nueva tarea!
                         </Text>
                     }
+                    /*showsVerticalScrollIndicator={true} // Eliminar si no gusta*/
                 />
             </View>
 
@@ -209,12 +220,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#F8F9FA',
         marginTop: 30,
     },
-    logo: {
-      width: 200,
-      height: 80,
-      alignSelf: 'center',
-      marginVertical: 10,
-    },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
@@ -238,6 +243,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         paddingVertical: 8,
         marginRight: 4,
+        maxHeight: 120,
     },
     emptyText: {
         textAlign: 'center',
@@ -268,7 +274,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderRadius: 10,
         paddingVertical: 6,
-        elevation: 5, // sombra Android
+        elevation: 5,
         shadowColor: '#000',
         shadowOpacity: 0.15,
         shadowRadius: 4,

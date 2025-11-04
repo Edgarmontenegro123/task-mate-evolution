@@ -16,10 +16,11 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onDelete, drag, isA
         <View style={styles.view}>
             <TouchableOpacity
                 onLongPress={drag}
+                delayLongPress={150}
                 disabled={!drag}
                 style = {[
                     styles.container,
-                    {backgroundColor: isActive ? '#e0e0e0' : '#fff'},
+                    {backgroundColor: isActive ? '#FAFAF9' : '#fff'},
                 ]}
                 >
                 <TouchableOpacity
