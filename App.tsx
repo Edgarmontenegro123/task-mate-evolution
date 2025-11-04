@@ -1,9 +1,13 @@
+import React from 'react';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import HomeScreen from './src/screens/HomeScreen';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import DeletedTasksScreen from './src/screens/DeletedTasksScreen';
-import {RootStackParamList} from "./src/navigation/types";
+import {RootStackParamList} from './src/navigation/types';
+// @ts-ignore
+import Logo from './assets/Logo_letra_negra.png';
+import {Image, StyleSheet} from 'react-native';
 
 
 
@@ -14,10 +18,38 @@ export default function App() {
       <GestureHandlerRootView style={{ flex: 1 }}>
           <NavigationContainer>
               <Stack.Navigator>
-                  <Stack.Screen name='Home' component={HomeScreen} options={{ title: 'Inicio' }}/>
-                  <Stack.Screen name='DeletedTasks' component={DeletedTasksScreen} options={{ title: 'Notas Eliminadas' }}/>
+                  <Stack.Screen name='Home'
+                                component={HomeScreen}
+                                options={{
+                                    headerTitle: () => (
+                                        <Image
+                                            source={Logo}
+                                            style={styles.logo}
+                                        />
+                                    ),
+                                    headerTitleAlign: 'center',
+                  }}/>
+                  <Stack.Screen name='DeletedTasks'
+                                component={DeletedTasksScreen}
+                                options={{
+                                    headerTitle: () => (
+                                        <Image
+                                            source={Logo}
+                                            style={styles.logo}
+                                        />
+                                    ),
+                                    headerTitleAlign: 'center',
+                                }}/>
               </Stack.Navigator>
           </NavigationContainer>
       </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+    logo: {
+        width: 140,
+        height: 40,
+        resizeMode: 'contain'
+    }
+})
