@@ -37,7 +37,7 @@ const EditTaskModal: React.FC<Props> = ({visible, task, onSave, onCancel}) => {
 
     return (
         <Modal
-            animationType='slide'
+            animationType='fade'
             transparent
             visible={visible}
             onRequestClose={onCancel}
