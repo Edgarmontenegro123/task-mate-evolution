@@ -7,6 +7,7 @@ import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import TaskItem from '../components/TaskItem';
 import {Task} from '../types/task';
 import {RootStackParamList} from '../navigation/types';
+import EditTaskModal from '../components/EditTaskModal';
 
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
@@ -18,6 +19,9 @@ const HomeScreen: React.FC = () => {
     const [deletedTasks, setDeletedTasks] = useState<Task[]>([]);
     const [inputHeight, setInputHeight] = useState(40);
     const inputRef = useRef<TextInput>(null);
+    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+    const [isEditVisible, setIsEditVisible] = useState<boolean>(false);
+
     const navigation = useNavigation<HomeScreenNavigationProp>();
 
 
@@ -77,6 +81,19 @@ const HomeScreen: React.FC = () => {
         prev.map(task => (task.id === id ? {...task, completed: !task.completed} : task)))
     }
 
+    const handleEdit = (task: Task) => {
+        setSelectedTask(task);
+        setIsEditVisible(true);
+    }
+
+    const handleSaveEdit = async (updatedTask: Task) => {
+        const updatedList = tasks.map((task: Task) => (task.id === updatedTask.id ? updatedTask : task));
+        setTasks(updatedList);
+        await AsyncStorage.setItem('tasks', JSON.stringify(updatedList));
+        setIsEditVisible(false);
+        setSelectedTask(null);
+    }
+
     const deleteTask = (id: string) => {
         Alert.alert(
             'Eliminar tarea',
@@ -114,13 +131,16 @@ const HomeScreen: React.FC = () => {
 
 
     const renderItem = ({ item, drag, isActive }: RenderItemParams<Task>) => (
-        <TaskItem
-            task={item}
-            onToggle={toggleTask}
-            onDelete={deleteTask}
-            drag={drag}
-            isActive={isActive}
-        />
+        <>
+            <TaskItem
+                task={item}
+                onToggle={toggleTask}
+                onDelete={deleteTask}
+                onEdit={() => handleEdit(item)}
+                drag={drag}
+                isActive={isActive}
+            />
+        </>
     );
 
     return(
@@ -208,6 +228,12 @@ const HomeScreen: React.FC = () => {
                 />*/}
 
             </View>
+            <EditTaskModal
+                visible={isEditVisible}
+                task={selectedTask}
+                onSave={handleSaveEdit}
+                onCancel={() => setIsEditVisible(false)}
+            />
         </View>
     )
 }

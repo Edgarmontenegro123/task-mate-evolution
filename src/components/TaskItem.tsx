@@ -1,17 +1,19 @@
 import React from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {Task} from '../types/task';
+
 import {Ionicons} from '@expo/vector-icons';
 
 type TaskItemProps = {
     task: Task;
     onToggle: (id: string) => void;
     onDelete: (id: string) => void;
+    onEdit: (task: Task) => void;
     drag?: () => void;
     isActive?: boolean;
 }
 
-const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onDelete, drag, isActive}) => {
+const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onDelete, onEdit, drag, isActive}) => {
     return (
         <View style={styles.view}>
             <TouchableOpacity
@@ -48,11 +50,18 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onDelete, drag, isA
                     </Text>
                 </View>
 
+                <TouchableOpacity onPress={() => onEdit(task)}>
+                    <Ionicons
+                        name='pencil'
+                        size={28}
+                        color='#8EC5FF'
+                    />
+                </TouchableOpacity>
                 <TouchableOpacity onPress={() => onDelete(task.id)}>
                     <Ionicons
                         name='trash-outline'
-                        size={24}
-                        color='#FF6347'
+                        size={28}
+                        color='#FFA1AD'
                     />
                 </TouchableOpacity>
             </TouchableOpacity>
