@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useCallback, useLayoutEffect} from 'react';
-import {View, Text, Button, StyleSheet, Alert, TouchableOpacity} from 'react-native';
+import {View, Text, StyleSheet, Alert, TouchableOpacity} from 'react-native';
 import DraggableFlatList, {RenderItemParams} from 'react-native-draggable-flatlist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
@@ -44,10 +44,8 @@ const DeletedTasksScreen: React.FC = () => {
                     const savedDeleted = await AsyncStorage.getItem('deletedTasks');
                     if (savedDeleted) {
                         const parsed = JSON.parse(savedDeleted);
-
                         const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
                         const now = Date.now();
-
                         const filtered = parsed.filter(
                             (t: Task) => !t.deletedAt || now - t.deletedAt < THIRTY_DAYS
                         );
@@ -106,6 +104,29 @@ const DeletedTasksScreen: React.FC = () => {
         )
     }
 
+    const handlePermanentDelete = async (id: string) => {
+        const taskToDelete = deletedTasks.find((t) => t.id === id);
+        if (!taskToDelete) return;
+
+        Alert.alert(
+            'Eliminar definitivamente',
+            `Esta acción no se puede deshacer.\n\n¿Eliminar la nota "${taskToDelete.text}"?`,
+            [
+                {text: 'Cancelar', style: 'cancel'},
+                {
+                    text: 'Eliminar',
+                    style: 'destructive',
+                    onPress: async () => {
+                        const updated = deletedTasks.filter(t => t.id !== id);
+                        setDeletedTasks(updated);
+                        await persist(updated);
+                    }
+                }
+            ],
+            {cancelable: true}
+        )
+    }
+
     const renderItem = ({item, drag, isActive}: RenderItemParams<Task>) => {
         const now = Date.now();
         const deletedAt = item.deletedAt || now;
@@ -135,10 +156,23 @@ const DeletedTasksScreen: React.FC = () => {
                         Se eliminará en {daysLeft} {daysLeft === 1 ? 'día' : 'días'}
                     </Text>
                 </View>
-                <View style={styles(colors).buttonWrapper}>
-                    <Button title='Recuperar'
-                            onPress={() => handleRecoverPress(item.id)}
-                    />
+                <View style={styles(colors).divider} />
+                <View style={styles(colors).actionsRow}>
+                    <TouchableOpacity
+                        style={[styles(colors).outlineBtn, { borderColor: item.color }]}
+                        onPress={() => handleRecoverPress(item.id)}
+                        activeOpacity={0.8}
+                    >
+                        <Text style={[styles(colors).outlineText, { color: item.color }]}>Recuperar</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles(colors).dangerBtn}
+                        onPress={() => handlePermanentDelete(item.id)}
+                        activeOpacity={0.8}
+                    >
+                        <Text style={styles(colors).dangerText}>Eliminar</Text>
+                    </TouchableOpacity>
                 </View>
             </TouchableOpacity>
         )
@@ -181,6 +215,12 @@ const styles = (colors: ReturnType<typeof useThemeColors>['colors']) =>
         fontWeight: 'bold',
         marginBottom: 12,
     },
+    divider: {
+        height: 1,
+        backgroundColor: colors.border,
+        opacity: 0.2,
+        marginVertical: 6,
+    },
     listContent: {
       paddingBottom: 100,
     },
@@ -216,8 +256,35 @@ const styles = (colors: ReturnType<typeof useThemeColors>['colors']) =>
         fontSize: 16,
         flexShrink: 1,
     },
+    actionsRow: {
+        flexDirection: 'row',
+        gap: 8,
+        alignItems: 'center',
+    },
     buttonWrapper: {
         alignSelf: 'center',
+    },
+    outlineBtn: {
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 8,
+        borderWidth: 1,
+        backgroundColor: 'transparent',
+    },
+    outlineText: {
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    dangerBtn: {
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 8,
+        backgroundColor: '#E5484D', // rojo accesible
+    },
+    dangerText: {
+        color: '#FFFFFF',
+        fontSize: 14,
+        fontWeight: '700',
     },
     emptyText: {
         textAlign: 'center',
