@@ -1,7 +1,7 @@
 import React from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {Task} from '../types/task';
-
+import {useThemeColors} from '../hooks/useThemeColors';
 import {Ionicons} from '@expo/vector-icons';
 
 type TaskItemProps = {
@@ -14,15 +14,17 @@ type TaskItemProps = {
 }
 
 const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onDelete, onEdit, drag, isActive}) => {
+    const {colors} = useThemeColors();
+
     return (
-        <View style={styles.view}>
+        <View style={[styles.view, {backgroundColor: colors.card}]}>
             <TouchableOpacity
                 onLongPress={drag}
                 delayLongPress={150}
                 disabled={!drag}
                 style = {[
                     styles.container,
-                    {backgroundColor: isActive ? '#FAFAF9' : '#fff'},
+                    {backgroundColor: isActive ? '#FAFAF9' : colors.card},
                 ]}
                 >
                 <TouchableOpacity

@@ -1,19 +1,40 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useState, useEffect, useCallback, useLayoutEffect} from 'react';
 import {View, Text, Button, StyleSheet, Alert, TouchableOpacity} from 'react-native';
 import DraggableFlatList, {RenderItemParams} from 'react-native-draggable-flatlist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {RouteProp, useRoute} from '@react-navigation/native';
+import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
+import {Ionicons} from '@expo/vector-icons';
 import {Task} from '../types/task';
-import {RootStackParamList} from "../navigation/types";
-
+import {RootStackParamList} from '../navigation/types';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 type DeletedTasksRouteProp = RouteProp<RootStackParamList, 'DeletedTasks'>;
 
 const DeletedTasksScreen: React.FC = () => {
     const route = useRoute<DeletedTasksRouteProp>();
+    const navigation = useNavigation();
     const initialDeletedTasks = route.params?.deletedTasks || [];
     const onRecover = route.params?.onRecover;
     const [deletedTasks, setDeletedTasks] = useState<Task[]>(initialDeletedTasks);
+
+    const {theme, toggleTheme, colors} = useThemeColors();
+
+    useLayoutEffect(() => {
+        navigation.setOptions({
+            headerRight: () => (
+                <Ionicons
+                    name={theme === 'dark' ? 'sunny' : 'moon'}
+                    size={24}
+                    color={theme === 'dark' ? '#FFD700' : '#333'}
+                    onPress={toggleTheme}
+                    style={{marginRight: 15}}
+            />
+            ),
+            headerStyle: {backgroundColor: colors.headerBg},
+            headerTitleStyle: {color: colors.headerText},
+            headerTintColor: colors.headerText,
+        });
+    }, [navigation, theme, colors, toggleTheme]);
 
     useEffect(() => {
         const loadDeletedFromStorage = async () => {
@@ -78,27 +99,35 @@ const DeletedTasksScreen: React.FC = () => {
             activeOpacity={0.9}
             onLongPress={drag}
             disabled={isActive}
-            style={[styles.taskContainer, isActive && styles.activeItem]}>
-
-            <View style={styles.textWrapper}>
+            /*style={[styles.taskContainer, isActive && styles.activeItem]}*/
+            style={[
+                styles(colors).taskContainer,
+                isActive && styles(colors).activeItem,
+            ]}
+        >
+            <View style={styles(colors).textWrapper}>
+                {/*<View style={styles.textWrapper}>*/}
                 <Text
-                    style={[styles.taskText, { color: item.color }]}
+                    style={[styles(colors).taskText, { color: item.color }]}
+                    /*style={[styles.taskText, { color: item.color }]}*/
                     numberOfLines={3}
                     ellipsizeMode="tail"
                 >
                     {item.text}
                 </Text>
             </View>
-
-            <View style={styles.buttonWrapper}>
+            <View style={styles(colors).buttonWrapper}>
+            {/*<View style={styles.buttonWrapper}>*/}
                 <Button title="Recuperar" onPress={() => handleRecoverPress(item.id)} />
             </View>
         </TouchableOpacity>
     )
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Historial de notas eliminadas</Text>
+        <View style={styles(colors).container}>
+        {/*<View style={styles.container}>*/}
+            <Text style={[styles(colors).title, {color: colors.text}]}>Historial de notas eliminadas</Text>
+            {/*<Text style={styles.title}>Historial de notas eliminadas</Text>*/}
             <DraggableFlatList
                 data={deletedTasks}
                 keyExtractor={(item) => item.id}
@@ -107,18 +136,22 @@ const DeletedTasksScreen: React.FC = () => {
                     setDeletedTasks(data);
                     persist(data);
                 }}
-                contentContainerStyle = {styles.listContent}
-                ListEmptyComponent={<Text>No hay notas eliminadas.</Text>}
+                contentContainerStyle = {styles(colors).listContent}
+                ListEmptyComponent={
+                    <Text style={[styles(colors).emptyText, {color: colors.text}]}>No hay notas eliminadas.</Text>
+                    /*<Text>No hay notas eliminadas.</Text>*/
+            }
                 showsVerticalScrollIndicator={true}
                 />
         </View>
     )
 }
 
-const styles = StyleSheet.create({
+const styles = (colors: ReturnType<typeof useThemeColors>['colors']) =>
+    StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F8F9FA',
+        backgroundColor: colors.background,
         padding: 16,
     },
     title: {
@@ -136,7 +169,7 @@ const styles = StyleSheet.create({
         gap: 8,
         marginBottom: 10,
         padding: 8,
-        backgroundColor: '#fff',
+        backgroundColor: colors.card,
         borderRadius: 8,
         shadowColor: '#000',
         shadowOpacity: 0.05,
@@ -158,7 +191,11 @@ const styles = StyleSheet.create({
     },
     buttonWrapper: {
         alignSelf: 'center',
-    }
+    },
+    emptyText: {
+        textAlign: 'center',
+        marginTop: 30,
+    },
 })
 
 export default DeletedTasksScreen

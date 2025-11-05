@@ -7,9 +7,13 @@ import {
     TouchableOpacity,
     StyleSheet,
     TouchableWithoutFeedback,
-    Keyboard, KeyboardAvoidingView, Platform, Animated
+    Keyboard,
+    KeyboardAvoidingView,
+    Platform,
+    Animated
 } from 'react-native';
 import {Task} from '../types/task';
+import {useThemeColors} from '../hooks/useThemeColors';
 import ScrollView = Animated.ScrollView;
 
 type Props = {
@@ -20,6 +24,7 @@ type Props = {
 }
 
 const EditTaskModal: React.FC<Props> = ({visible, task, onSave, onCancel}) => {
+    const {colors, theme} = useThemeColors();
     const [text, setText] = useState(task?.text || '');
     const [color, setColor] = useState(task?.color || '#ffffff');
 
@@ -35,6 +40,8 @@ const EditTaskModal: React.FC<Props> = ({visible, task, onSave, onCancel}) => {
         onSave({ ...task, text, color})
     }
 
+    const styles = createStyles(colors);
+
     return (
         <Modal
             animationType='fade'
@@ -49,17 +56,20 @@ const EditTaskModal: React.FC<Props> = ({visible, task, onSave, onCancel}) => {
                         style={styles.keyboardView}
                     >
                         <View style={[styles.modalContainer, {borderColor: color}]}>
-                            <Text style={styles.title}>Editar Nota</Text>
+                            <Text style={[styles.title, { color: colors.text }]}>Editar Nota</Text>
                             <ScrollView
                                 contentContainerStyle={styles.scrollContent}
                                 keyboardShouldPersistTaps="handled"
                             >
                                 <TextInput
-                                    style={[styles.input, {borderColor: color}]}
+                                    style={[styles.input, {borderColor: color, color: colors.text}]}
                                     multiline
                                     value={text}
                                     onChangeText={setText}
                                     placeholder='Edita tu nota...'
+                                    placeholderTextColor={
+                                    theme === 'dark' ? '#CCCCCC' : '#555555'
+                                    }
                             />
                             </ScrollView>
                             <View style={styles.colorRow}>
@@ -77,10 +87,10 @@ const EditTaskModal: React.FC<Props> = ({visible, task, onSave, onCancel}) => {
 
                             <View style={styles.buttonRow}>
                                 <TouchableOpacity onPress={onCancel} style={styles.cancelButton}>
-                                    <Text>Cancelar</Text>
+                                    <Text style={{color: colors.text}}>Cancelar</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity onPress={Keyboard.dismiss} style={styles.cancelButton}>
-                                    <Text>Ocultar teclado</Text>
+                                    <Text style={{color: colors.text}}>Ocultar teclado</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity onPress={handleSave} style={[styles.saveButton, {backgroundColor: color}]}>
                                     <Text style={styles.saveText}>Guardar</Text>
@@ -94,74 +104,75 @@ const EditTaskModal: React.FC<Props> = ({visible, task, onSave, onCancel}) => {
     )
 }
 
-const styles = StyleSheet.create({
-    overlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    modalContainer: {
-        width: '90%',
-        backgroundColor: 'white',
-        borderRadius: 12,
-        padding: 20,
-        borderWidth: 2,
-    },
-    title: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        marginBottom: 10,
-        textAlign: 'center',
-    },
-    input: {
-        borderWidth: 1,
-        borderRadius: 8,
-        padding: 10,
-        minHeight: 100,
-        textAlignVertical: 'top',
-        fontSize: 16,
-    },
-    colorRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        marginVertical: 15,
-    },
-    colorOption: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-    },
-    scrollContent: {
-        paddingBottom: 20,
-    },
-    keyboardView: {
-        width: '100%',
-        alignItems: 'center',
-    },
-    hideKeyboardButton: {
-        alignSelf: 'center',
-        marginBottom: 10,
-    },
-    hideKeyboardText: {
-        fontSize: 16,
-        color: '#555',
-    },
-    buttonRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    cancelButton: {
-        padding: 10,
-    },
-    saveButton: {
-        padding: 10,
-        borderRadius: 8,
-    },
-    saveText: {
-        color: 'white',
-        fontWeight: 'bold',
-    },
-});
+const createStyles = (colors: ReturnType<typeof useThemeColors>['colors']) =>
+    StyleSheet.create({
+        overlay: {
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        modalContainer: {
+            width: '90%',
+            backgroundColor: colors.card,
+            borderRadius: 12,
+            padding: 20,
+            borderWidth: 2,
+        },
+        title: {
+            fontSize: 20,
+            fontWeight: 'bold',
+            marginBottom: 10,
+            textAlign: 'center',
+        },
+        input: {
+            borderWidth: 1,
+            borderRadius: 8,
+            padding: 10,
+            minHeight: 100,
+            textAlignVertical: 'top',
+            fontSize: 16,
+        },
+        colorRow: {
+            flexDirection: 'row',
+            justifyContent: 'space-around',
+            marginVertical: 15,
+        },
+        colorOption: {
+            width: 32,
+            height: 32,
+            borderRadius: 16,
+        },
+        scrollContent: {
+            paddingBottom: 20,
+        },
+        keyboardView: {
+            width: '100%',
+            alignItems: 'center',
+        },
+        hideKeyboardButton: {
+            alignSelf: 'center',
+            marginBottom: 10,
+        },
+        hideKeyboardText: {
+            fontSize: 16,
+            color: '#555',
+        },
+        buttonRow: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+        },
+        cancelButton: {
+            padding: 10,
+        },
+        saveButton: {
+            padding: 10,
+            borderRadius: 8,
+        },
+        saveText: {
+            color: 'white',
+            fontWeight: 'bold',
+        },
+    });
 
 export default EditTaskModal

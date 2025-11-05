@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect, useRef, useLayoutEffect} from 'react';
 import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {View, Text, TextInput, Button, StyleSheet, Alert} from 'react-native';
@@ -8,6 +8,8 @@ import TaskItem from '../components/TaskItem';
 import {Task} from '../types/task';
 import {RootStackParamList} from '../navigation/types';
 import EditTaskModal from '../components/EditTaskModal';
+import {Ionicons} from '@expo/vector-icons';
+import {useThemeColors} from '../hooks/useThemeColors';
 
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
@@ -21,8 +23,25 @@ const HomeScreen: React.FC = () => {
     const inputRef = useRef<TextInput>(null);
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [isEditVisible, setIsEditVisible] = useState<boolean>(false);
+    const {theme, toggleTheme, colors} = useThemeColors();
+    const styles = createStyles(colors);
 
     const navigation = useNavigation<HomeScreenNavigationProp>();
+
+    useLayoutEffect(() => {
+        navigation.setOptions({
+            headerRight: () => (
+                <Ionicons
+                    name={theme === 'dark' ? 'sunny' : 'moon'}
+                    size={24}
+                    color={theme === 'dark' ? '#FFD700' : '#333'}
+                    onPress={toggleTheme}
+                    style={{marginRight: 15}}
+                />
+            ),
+            headerStyle: {backgroundColor: colors.headerBg}, headerTitleStyle: {color: colors.headerText},
+        });
+    }, [navigation, theme, colors, toggleTheme]);
 
 
     useEffect(() => {
@@ -149,6 +168,7 @@ const HomeScreen: React.FC = () => {
                 <TextInput
                     style = {[styles.input, {height: Math.min(inputHeight, 120)}]}
                     placeholder= 'Agrega una nueva tarea!'
+                    placeholderTextColor={colors.placeholder}
                     value = {newTask}
                     onChangeText = {setNewTask}
                     multiline
@@ -238,13 +258,13 @@ const HomeScreen: React.FC = () => {
     )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ReturnType<typeof useThemeColors>['colors']) =>
+StyleSheet.create({
     container: {
         flex: 1,
         paddingHorizontal: 8,
         paddingTop: 30,
-        backgroundColor: '#F8F9FA',
-        marginTop: 30,
+        backgroundColor: colors.background,
     },
     title: {
         fontSize: 24,
@@ -263,13 +283,15 @@ const styles = StyleSheet.create({
     },
     input: {
         flex: 1,
-        borderColor: '#ccc',
+        borderColor: colors.border,
+        backgroundColor: colors.card,
         borderWidth: 1,
         borderRadius: 8,
         paddingHorizontal: 12,
         paddingVertical: 8,
         marginRight: 4,
         maxHeight: 120,
+        color: colors.text,
     },
     emptyText: {
         textAlign: 'center',
@@ -297,7 +319,7 @@ const styles = StyleSheet.create({
         bottom: 20,
         alignSelf: 'center',
         width: '90%',
-        backgroundColor: '#fff',
+        backgroundColor: colors.card,
         borderRadius: 10,
         paddingVertical: 6,
         elevation: 5,
