@@ -6,4 +6,5 @@ export type Task = {
     createdAt: number;    // timestamp (Date.now())
     imageUri?: string;    // opcional: foto guardada localmente (URI)
     audioUri?: string;    // opcional: nota de voz (URI)
+    deletedAt?: number;
 };

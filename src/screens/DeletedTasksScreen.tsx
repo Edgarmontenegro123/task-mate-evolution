@@ -7,12 +7,13 @@ import {Ionicons} from '@expo/vector-icons';
 import {Task} from '../types/task';
 import {RootStackParamList} from '../navigation/types';
 import { useThemeColors } from '../hooks/useThemeColors';
+import {NativeStackNavigationProp} from "@react-navigation/native-stack";
 
 type DeletedTasksRouteProp = RouteProp<RootStackParamList, 'DeletedTasks'>;
 
 const DeletedTasksScreen: React.FC = () => {
     const route = useRoute<DeletedTasksRouteProp>();
-    const navigation = useNavigation();
+    const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const initialDeletedTasks = route.params?.deletedTasks || [];
     const onRecover = route.params?.onRecover;
     const [deletedTasks, setDeletedTasks] = useState<Task[]>(initialDeletedTasks);
@@ -28,7 +29,7 @@ const DeletedTasksScreen: React.FC = () => {
                     color={theme === 'dark' ? '#FFD700' : '#333'}
                     onPress={toggleTheme}
                     style={{marginRight: 15}}
-            />
+                />
             ),
             headerStyle: {backgroundColor: colors.headerBg},
             headerTitleStyle: {color: colors.headerText},
@@ -39,9 +40,20 @@ const DeletedTasksScreen: React.FC = () => {
     useEffect(() => {
         const loadDeletedFromStorage = async () => {
             try {
-                if(initialDeletedTasks.length === 0) {
+                if (initialDeletedTasks.length === 0) {
                     const savedDeleted = await AsyncStorage.getItem('deletedTasks');
-                    if(savedDeleted) setDeletedTasks(JSON.parse(savedDeleted));
+                    if (savedDeleted) {
+                        const parsed = JSON.parse(savedDeleted);
+
+                        const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
+                        const now = Date.now();
+
+                        const filtered = parsed.filter(
+                            (t: Task) => !t.deletedAt || now - t.deletedAt < THIRTY_DAYS
+                        );
+                        setDeletedTasks(filtered);
+                        await AsyncStorage.setItem('deletedTasks', JSON.stringify(filtered));
+                    }
                 } else {
                     setDeletedTasks(initialDeletedTasks);
                 }
@@ -62,7 +74,7 @@ const DeletedTasksScreen: React.FC = () => {
 
     const handleRecoverPress = async (id: string) => {
         const taskToRecover = deletedTasks.find((t) => t.id === id);
-        if(!taskToRecover) return;
+        if (!taskToRecover) return;
 
         Alert.alert(
             'Recuperar nota',
@@ -75,7 +87,7 @@ const DeletedTasksScreen: React.FC = () => {
                 {
                     text: 'Recuperar',
                     onPress: async () => {
-                        if(onRecover) {
+                        if (onRecover) {
                             onRecover(id);
                         }
                         const updatedDeleted = deletedTasks.filter(t => t.id !== id);
@@ -94,40 +106,49 @@ const DeletedTasksScreen: React.FC = () => {
         )
     }
 
-    const renderItem = ({item, drag, isActive} : RenderItemParams<Task>) => (
-        <TouchableOpacity
-            activeOpacity={0.9}
-            onLongPress={drag}
-            disabled={isActive}
-            /*style={[styles.taskContainer, isActive && styles.activeItem]}*/
-            style={[
-                styles(colors).taskContainer,
-                isActive && styles(colors).activeItem,
-            ]}
-        >
-            <View style={styles(colors).textWrapper}>
-                {/*<View style={styles.textWrapper}>*/}
-                <Text
-                    style={[styles(colors).taskText, { color: item.color }]}
-                    /*style={[styles.taskText, { color: item.color }]}*/
-                    numberOfLines={3}
-                    ellipsizeMode="tail"
-                >
-                    {item.text}
-                </Text>
-            </View>
-            <View style={styles(colors).buttonWrapper}>
-            {/*<View style={styles.buttonWrapper}>*/}
-                <Button title="Recuperar" onPress={() => handleRecoverPress(item.id)} />
-            </View>
-        </TouchableOpacity>
-    )
+    const renderItem = ({item, drag, isActive}: RenderItemParams<Task>) => {
+        const now = Date.now();
+        const deletedAt = item.deletedAt || now;
+        const msElapsed = now - deletedAt;
+        const daysLeft = Math.max(0, 30 - Math.floor(msElapsed / (1000 * 60 * 60 * 24)));
+
+        return (
+            <TouchableOpacity
+                activeOpacity={0.9}
+                onLongPress={drag}
+                disabled={isActive}
+                style={[
+                    styles(colors).taskContainer,
+                    isActive && styles(colors).activeItem,
+                ]}
+            >
+                <View style={styles(colors).textWrapper}>
+                    <Text
+                        style={[styles(colors).taskText, {color: item.color}]}
+                        numberOfLines={3}
+                        ellipsizeMode="tail"
+                    >
+                        {item.text}
+                    </Text>
+                    <Text
+                        style={[styles(colors).expireText, {color: colors.text}]}>
+                        Se eliminará en {daysLeft} {daysLeft === 1 ? 'día' : 'días'}
+                    </Text>
+                </View>
+                <View style={styles(colors).buttonWrapper}>
+                    <Button title='Recuperar'
+                            onPress={() => handleRecoverPress(item.id)}
+                    />
+                </View>
+            </TouchableOpacity>
+        )
+    }
 
     return (
         <View style={styles(colors).container}>
-        {/*<View style={styles.container}>*/}
-            <Text style={[styles(colors).title, {color: colors.text}]}>Historial de notas eliminadas</Text>
-            {/*<Text style={styles.title}>Historial de notas eliminadas</Text>*/}
+            <Text style={[styles(colors).title, {color: colors.text}]}>
+                Historial de notas eliminadas
+            </Text>
             <DraggableFlatList
                 data={deletedTasks}
                 keyExtractor={(item) => item.id}
@@ -136,13 +157,14 @@ const DeletedTasksScreen: React.FC = () => {
                     setDeletedTasks(data);
                     persist(data);
                 }}
-                contentContainerStyle = {styles(colors).listContent}
+                contentContainerStyle={styles(colors).listContent}
                 ListEmptyComponent={
-                    <Text style={[styles(colors).emptyText, {color: colors.text}]}>No hay notas eliminadas.</Text>
-                    /*<Text>No hay notas eliminadas.</Text>*/
-            }
+                    <Text style={[styles(colors).emptyText, {color: colors.text}]}>
+                        No hay notas eliminadas.
+                    </Text>
+                }
                 showsVerticalScrollIndicator={true}
-                />
+            />
         </View>
     )
 }
@@ -184,6 +206,11 @@ const styles = (colors: ReturnType<typeof useThemeColors>['colors']) =>
     textWrapper: {
       flex: 1,
       paddingRight: 8,
+    },
+    expireText: {
+        fontSize: 13,
+        opacity: 0.7,
+        marginTop: 4,
     },
     taskText: {
         fontSize: 16,

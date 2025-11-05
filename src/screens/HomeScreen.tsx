@@ -127,7 +127,10 @@ const HomeScreen: React.FC = () => {
                     style: 'destructive',
                     onPress: () => {
                         const deleted = tasks.find(task => task.id === id);
-                        if(deleted) setDeletedTasks(prev => [deleted, ...prev])
+                        if(deleted) {
+                            const deletedWithDate = {...deleted, deletedAt: Date.now()};
+                            setDeletedTasks(prev => [deletedWithDate, ...prev])
+                        }
                         setTasks(prev => prev.filter(task => task.id !== id));
                     }
                 }
@@ -218,7 +221,6 @@ const HomeScreen: React.FC = () => {
                             Todavía no hay tareas cargadas, agrega una nueva tarea!
                         </Text>
                     }
-                    /*showsVerticalScrollIndicator={true} // Eliminar si no gusta*/
                 />
             </View>
 
