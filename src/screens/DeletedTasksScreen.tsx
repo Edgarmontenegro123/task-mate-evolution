@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useCallback, useLayoutEffect} from 'react';
-import {View, Text, StyleSheet, Alert, TouchableOpacity} from 'react-native';
+import {View, Text, StyleSheet, Alert, TouchableOpacity, Modal} from 'react-native';
 import DraggableFlatList, {RenderItemParams} from 'react-native-draggable-flatlist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
@@ -17,6 +17,8 @@ const DeletedTasksScreen: React.FC = () => {
     const initialDeletedTasks = route.params?.deletedTasks || [];
     const onRecover = route.params?.onRecover;
     const [deletedTasks, setDeletedTasks] = useState<Task[]>(initialDeletedTasks);
+    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+    const [isPreviewVisible, setIsPreviewVisible] = useState<boolean>(false);
 
     const {theme, toggleTheme, colors} = useThemeColors();
 
@@ -110,7 +112,7 @@ const DeletedTasksScreen: React.FC = () => {
 
         Alert.alert(
             'Eliminar definitivamente',
-            `Esta acción no se puede deshacer.\n\n¿Eliminar la nota "${taskToDelete.text}"?`,
+            `Esta acción no se puede deshacer.\n¿Eliminar la nota "${taskToDelete.text}"?`,
             [
                 {text: 'Cancelar', style: 'cancel'},
                 {
@@ -137,6 +139,10 @@ const DeletedTasksScreen: React.FC = () => {
             <TouchableOpacity
                 activeOpacity={0.9}
                 onLongPress={drag}
+                onPress={() => {
+                    setSelectedTask(item);
+                    setIsPreviewVisible(true)
+                }}
                 disabled={isActive}
                 style={[
                     styles(colors).taskContainer,
@@ -147,7 +153,7 @@ const DeletedTasksScreen: React.FC = () => {
                     <Text
                         style={[styles(colors).taskText, {color: item.color}]}
                         numberOfLines={3}
-                        ellipsizeMode="tail"
+                        ellipsizeMode='tail'
                     >
                         {item.text}
                     </Text>
@@ -159,19 +165,22 @@ const DeletedTasksScreen: React.FC = () => {
                 <View style={styles(colors).divider} />
                 <View style={styles(colors).actionsRow}>
                     <TouchableOpacity
-                        style={[styles(colors).outlineBtn, { borderColor: item.color }]}
                         onPress={() => handleRecoverPress(item.id)}
-                        activeOpacity={0.8}
                     >
-                        <Text style={[styles(colors).outlineText, { color: item.color }]}>Recuperar</Text>
+                        <Ionicons
+                            name='arrow-undo-sharp'
+                            size={28}
+                            color='#4BAC00'
+                        />
                     </TouchableOpacity>
-
                     <TouchableOpacity
-                        style={styles(colors).dangerBtn}
                         onPress={() => handlePermanentDelete(item.id)}
-                        activeOpacity={0.8}
                     >
-                        <Text style={styles(colors).dangerText}>Eliminar</Text>
+                        <Ionicons
+                            name='close-circle-sharp'
+                            size={28}
+                            color='#E7180B'
+                        />
                     </TouchableOpacity>
                 </View>
             </TouchableOpacity>
@@ -199,6 +208,49 @@ const DeletedTasksScreen: React.FC = () => {
                 }
                 showsVerticalScrollIndicator={true}
             />
+            <Modal
+                visible={isPreviewVisible}
+                transparent
+                animationType='slide'
+                onRequestClose={() => setIsPreviewVisible(false)}
+            >
+                <View style={styles(colors).overlay}>
+                    <View style={styles(colors).modalContainer}>
+                        <Text style={[styles(colors).title, {color: colors.text}]}>
+                            Nota Eliminada
+                        </Text>
+                        <Text style={[styles(colors).modalText, {color: colors.text}]}>
+                            {selectedTask?.text}
+                        </Text>
+                        <View style={styles(colors).modalButtons}>
+                            <TouchableOpacity
+                                style={[styles(colors).outlineBtn, {borderColor: selectedTask?.color}]}
+                                onPress={() => {
+                                    if(selectedTask) handleRecoverPress(selectedTask.id);
+                                    setIsPreviewVisible(false);
+                                }}
+                                >
+                                <Text style={[styles(colors).outlineText, {color: selectedTask?.color}]}>Recuperar</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles(colors).dangerBtn}
+                                onPress={() => {
+                                    if(selectedTask) handlePermanentDelete(selectedTask.id);
+                                    setIsPreviewVisible(false);
+                                }}
+                                >
+                                <Text style={[styles(colors).dangerText]}>Eliminar</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles(colors).cancelBtn]}
+                                onPress={() => setIsPreviewVisible(false)}
+                                >
+                                <Text style={styles(colors).cancelText}>Cerrar</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </View>
     )
 }
@@ -265,6 +317,7 @@ const styles = (colors: ReturnType<typeof useThemeColors>['colors']) =>
         alignSelf: 'center',
     },
     outlineBtn: {
+        width: 110,
         paddingVertical: 6,
         paddingHorizontal: 12,
         borderRadius: 8,
@@ -279,7 +332,7 @@ const styles = (colors: ReturnType<typeof useThemeColors>['colors']) =>
         paddingVertical: 6,
         paddingHorizontal: 12,
         borderRadius: 8,
-        backgroundColor: '#E5484D', // rojo accesible
+        backgroundColor: '#E5484D',
     },
     dangerText: {
         color: '#FFFFFF',
@@ -289,6 +342,46 @@ const styles = (colors: ReturnType<typeof useThemeColors>['colors']) =>
     emptyText: {
         textAlign: 'center',
         marginTop: 30,
+    },
+    overlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContainer: {
+        width: '90%',
+        backgroundColor: colors.card,
+        borderRadius: 12,
+        padding: 20,
+        borderWidth: 1,
+        borderColor: colors.border,
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 10,
+        textAlign: 'center',
+    },
+    modalText: {
+        fontSize: 16,
+        marginBottom: 20,
+        textAlign: 'justify',
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: 8,
+    },
+    cancelBtn: {
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 8,
+        backgroundColor: colors.border,
+    },
+    cancelText: {
+        color: colors.text,
+        fontWeight: '600',
     },
 })
 
