@@ -1,19 +1,21 @@
 import React from 'react';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import HomeScreen from './src/screens/HomeScreen';
-import {ThemeProvider} from './src/context/ThemeProvider';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {Image, StyleSheet} from 'react-native';
+import HomeScreen from './src/screens/HomeScreen';
 import DeletedTasksScreen from './src/screens/DeletedTasksScreen';
+import {ThemeProvider} from './src/context/ThemeProvider';
 import {RootStackParamList} from './src/navigation/types';
 // @ts-ignore
 import Logo from './assets/Logo_letra_negra.png';
-import {Image, StyleSheet} from 'react-native';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
-  return (
+  // @ts-ignore
+    // @ts-ignore
+    return (
       <GestureHandlerRootView style={{ flex: 1 }}>
           <ThemeProvider>
               <NavigationContainer>
@@ -21,6 +23,7 @@ export default function App() {
                       <Stack.Screen name='Home'
                                     component={HomeScreen}
                                     options={{
+                                        title: 'Inicio',
                                         headerTitle: () => (
                                             <Image
                                                 source={Logo}
@@ -38,7 +41,7 @@ export default function App() {
                                                 style={styles.logo}
                                             />
                                         ),
-                                        headerTitleAlign: 'center',
+                                        headerBackTitle: 'Volver',
                                     }}/>
                   </Stack.Navigator>
               </NavigationContainer>
