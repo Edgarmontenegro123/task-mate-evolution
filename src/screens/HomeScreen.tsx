@@ -11,6 +11,8 @@ import EditTaskModal from '../components/EditTaskModal';
 import {Ionicons} from '@expo/vector-icons';
 import {useThemeColors} from '../hooks/useThemeColors';
 
+import { LogBox } from 'react-native';
+LogBox.ignoreLogs(['Non-serializable values were found in the navigation state']);
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -47,14 +49,6 @@ const HomeScreen: React.FC = () => {
     useEffect(() => {
         const loadData = async () => {
             try {
-                /*const rawTasks = await AsyncStorage.getItem('tasks');
-                const rawDeleted = await AsyncStorage.getItem('deletedTasks');
-                console.log('Storage Debug: ');
-                console.log('Tasks: ', rawTasks);
-                console.log('DeletedTasks: ', rawDeleted);
-
-                if(rawTasks) setTasks(JSON.parse(rawTasks));
-                if(rawDeleted) setDeletedTasks(JSON.parse(rawDeleted));*/
                 const savedTasks = await AsyncStorage.getItem('tasks');
                 const savedDeleted = await AsyncStorage.getItem('deletedTasks');
                 if(savedTasks) setTasks(JSON.parse(savedTasks));
@@ -169,11 +163,11 @@ const HomeScreen: React.FC = () => {
         <View style = {styles.container}>
             <View style={styles.inputContainer}>
                 <TextInput
+                    value = {newTask}
+                    onChangeText = {setNewTask}
                     style = {[styles.input, {height: Math.min(inputHeight, 120)}]}
                     placeholder= 'Agrega una nueva tarea!'
                     placeholderTextColor={colors.placeholder}
-                    value = {newTask}
-                    onChangeText = {setNewTask}
                     multiline
                     scrollEnabled={true}
                     textAlignVertical={'top'}
@@ -234,21 +228,6 @@ const HomeScreen: React.FC = () => {
                         })
                     }}
                 />
-                {/*<Button
-                    title="🧹 Limpiar notas eliminadas"
-                    color="red"
-                    onPress={async () => {
-                        try {
-                            await AsyncStorage.removeItem('deletedTasks');
-                            setDeletedTasks([]); // actualiza el estado local también
-                            console.log('✅ Clave deletedTasks eliminada del storage');
-                            Alert.alert('Storage limpio', 'Se eliminaron las notas eliminadas almacenadas.');
-                        } catch (error) {
-                            console.error('Error al limpiar deletedTasks:', error);
-                        }
-                    }}
-                />*/}
-
             </View>
             <EditTaskModal
                 visible={isEditVisible}
