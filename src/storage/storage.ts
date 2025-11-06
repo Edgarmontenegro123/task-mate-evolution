@@ -34,7 +34,7 @@ export const addTaskToStorage = async (task: Task): Promise<Task[]> => {
     return updated;
 };
 
-// Reemplazar una tarea por id
+// Reemplazar una tarea por ID
 export const updateTaskInStorage = async (updatedTask: Task): Promise<Task[]> => {
     const tasks = await loadTasks();
     const newTasks = tasks.map(t => (t.id === updatedTask.id ? updatedTask : t));
@@ -42,7 +42,7 @@ export const updateTaskInStorage = async (updatedTask: Task): Promise<Task[]> =>
     return newTasks;
 };
 
-// Eliminar por id
+// Eliminar por ID
 export const removeTaskFromStorage = async (id: string): Promise<Task[]> => {
     const tasks = await loadTasks();
     const newTasks = tasks.filter(t => t.id !== id);

@@ -23,7 +23,7 @@ export const useThemeColors = (): {
             background: '#F8F9FA',
             card: '#FFFFFF',
             border: '#E5E5E5',
-            text: '#111111',
+            text: '#62748E',
             placeholder: '#71717B',
             headerBg: '#FFFFFF',
             headerText: '#111111',
