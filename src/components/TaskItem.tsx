@@ -1,8 +1,9 @@
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {Task} from '../types/task';
 import {useThemeColors} from '../hooks/useThemeColors';
 import {Ionicons} from '@expo/vector-icons';
+import {useAudioPlayer, useAudioPlayerStatus} from 'expo-audio';
 
 type TaskItemProps = {
     task: Task;
@@ -13,8 +14,56 @@ type TaskItemProps = {
     isActive?: boolean;
 }
 
+const AudioControl: React.FC<{
+    uri: string;
+    iconColor: string;
+    playToken: number;
+    onRequestRestart: () => void;
+}> = ({ uri, iconColor, playToken, onRequestRestart }) => {
+    const player = useAudioPlayer(uri, { downloadFirst: true });
+    const status = useAudioPlayerStatus(player);
+
+    useEffect(() => {
+        if(playToken > 0) {
+            player.play();
+        }
+    }, [playToken, player]);
+
+    const handlePlayPause = () => {
+        if (!uri || !player) return;
+        if (status?.playing) {
+            player.pause();
+        } else {
+            onRequestRestart();
+        }
+    };
+
+    return (
+        <TouchableOpacity onPress={handlePlayPause} style={{ marginLeft: 8 }}>
+            <Ionicons
+                name={status?.playing ? 'pause-circle' : 'play-circle'}
+                size={26}
+                color={iconColor}
+            />
+        </TouchableOpacity>
+    );
+};
+
 const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onDelete, onEdit, drag, isActive}) => {
     const {colors} = useThemeColors();
+    const [audioKey, setAudioKey] = useState(0);
+    const [playToken, setPlayToken] = useState(0);
+
+    useEffect(() => {
+        setAudioKey((k) => k + 1);
+    }, [task.audioUri, task.editedAt]);
+
+    const requestRestart = () => {
+        setAudioKey((k) => k + 1);
+        setPlayToken((t) => t + 1);
+    }
+
+    if(!task) return null;
 
     return (
         <View style={[styles.view, {backgroundColor: colors.card}]}>
@@ -39,18 +88,36 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onDelete, onEdit, d
                 </TouchableOpacity>
 
                 <View style={{ flex: 1 }}>
-                    <Text
-                        style={[
-                            styles.taskText,
-                            {
-                                textDecorationLine: task.completed ? 'line-through' : 'none',
-                                color: task.color,
-                            }
-                        ]}
-                    >
-                        {task.text}
-                    </Text>
+                    {task.text ? (
+                        <Text
+                            style={[
+                                styles.taskText,
+                                {
+                                    textDecorationLine: task.completed ? 'line-through' : 'none',
+                                    color: task.color,
+                                }
+                            ]}
+                        >
+                            {task.text}
+                        </Text>
+                    ) : (
+                        <Text
+                            style={[
+                                styles.taskText,
+                                {color: colors.placeholder, fontStyle: 'italic'},
+                            ]}
+                        >(nota de voz)</Text>
+                    )}
                 </View>
+                {task.audioUri ? (
+                    <AudioControl
+                        key={`${task.audioUri}-${task.editedAt ?? 0}-${audioKey}`}
+                        uri={task.audioUri}
+                        iconColor={colors.text}
+                        playToken={playToken}
+                        onRequestRestart={requestRestart}
+                    />
+                ) : null}
 
                 <TouchableOpacity onPress={() => onEdit(task)}>
                     <Ionicons

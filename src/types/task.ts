@@ -7,4 +7,5 @@ export type Task = {
     imageUri?: string;    // opcional: foto guardada localmente (URI)
     audioUri?: string;    // opcional: nota de voz (URI)
     deletedAt?: number;
+    editedAt?: number;
 };

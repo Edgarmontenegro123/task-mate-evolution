@@ -12,20 +12,46 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "ios": {
-      "supportsTablet": true
+    "web": {
+      "favicon": "./assets/favicon.png"
     },
+    "plugins": [
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Permitir que Task Mate Evolution grabe audio para tus notas de voz."
+        }
+      ]
+    ],
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.taskmateevolution"
+      "package": "com.anonymous.taskmateevolution",
+      "permissions": [
+        "RECORD_AUDIO",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    }
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "audio",
+          "audio"
+        ],
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "com.anonymous.taskmateevolution"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "53485b77-3d1a-4034-88ae-e5ac4398b0f0"
+      }
+    },
+    "owner": "edgarmontenegro321"
   }
 }

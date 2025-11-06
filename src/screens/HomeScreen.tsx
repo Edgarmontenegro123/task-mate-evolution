@@ -1,7 +1,7 @@
 import React, {useState, useEffect, useRef, useLayoutEffect} from 'react';
 import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {View, Text, TextInput, Button, StyleSheet, Alert} from 'react-native';
+import {View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import TaskItem from '../components/TaskItem';
@@ -10,6 +10,12 @@ import {RootStackParamList} from '../navigation/types';
 import EditTaskModal from '../components/EditTaskModal';
 import {Ionicons} from '@expo/vector-icons';
 import {useThemeColors} from '../hooks/useThemeColors';
+import {
+    useAudioRecorder,
+    requestRecordingPermissionsAsync,
+    RecordingPresets,
+    setAudioModeAsync
+} from 'expo-audio';
 
 import { LogBox } from 'react-native';
 LogBox.ignoreLogs(['Non-serializable values were found in the navigation state']);
@@ -25,10 +31,14 @@ const HomeScreen: React.FC = () => {
     const inputRef = useRef<TextInput>(null);
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [isEditVisible, setIsEditVisible] = useState<boolean>(false);
+    const [isRecording, setIsRecording] = useState<boolean>(false);
     const {theme, toggleTheme, colors} = useThemeColors();
     const styles = createStyles(colors);
 
     const navigation = useNavigation<HomeScreenNavigationProp>();
+
+    const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -60,7 +70,6 @@ const HomeScreen: React.FC = () => {
         loadData();
     }, []);
 
-    // Guardar automáticamente tasks y deletedTasks cada vez que cambien
     useEffect(() => {
         const saveData = async () => {
             try {
@@ -74,19 +83,65 @@ const HomeScreen: React.FC = () => {
     }, [tasks, deletedTasks]);
 
 
-    const addTask = () => {
-        if(newTask.trim() === '') return;
+    const addTask = (audioUri?: string) => {
+        if(!newTask.trim() && !audioUri) return;
+
+        let taskText = newTask;
+        if(!newTask.trim() && audioUri) {
+            const voiceNotes = tasks.filter(t => t.text.startsWith('grabación.'));
+            const nextNumber = voiceNotes.length + 1;
+            const padded = nextNumber.toString().padStart(2, '0');
+            taskText = `grabación.${padded}`;
+        }
 
         const task: Task = {
             id: Date.now().toString(),
-            text: newTask,
+            text: taskText,
             completed: false,
             color: selectedColor,
-            createdAt: Date.now()
+            createdAt: Date.now(),
+            editedAt: Date.now(),
+            audioUri: audioUri || undefined,
         };
         setTasks(prev => [task, ...prev]);
         setNewTask('');
-        setInputHeight(40); // eliminar si no funciona
+        setInputHeight(40);
+    }
+
+    const startRecording = async () => {
+        try {
+            const permission = await requestRecordingPermissionsAsync();
+            if(!permission.granted) {
+                Alert.alert('Se necesita permiso para grabar audio.');
+                return;
+            }
+            await setAudioModeAsync({
+                allowsRecording: true,
+                playsInSilentMode: true,
+            });
+            await recorder.prepareToRecordAsync();
+            await recorder.record();
+            setIsRecording(true);
+        } catch(err) {
+            console.error('Error al iniciar la grabación: ', err);
+        }
+    }
+
+    const stopRecording = async () => {
+        try {
+            await recorder.stop();
+            const uri = recorder.uri;
+            setIsRecording(false);
+
+            await setAudioModeAsync({
+                allowsRecording: false,
+                playsInSilentMode: true,
+            })
+
+            if(uri) addTask(uri);
+        } catch (err) {
+            console.error('Error al detener grabación: ', err);
+        }
     }
 
     const toggleTask = (id: string) => {
@@ -100,7 +155,17 @@ const HomeScreen: React.FC = () => {
     }
 
     const handleSaveEdit = async (updatedTask: Task) => {
-        const updatedList = tasks.map((task: Task) => (task.id === updatedTask.id ? updatedTask : task));
+        const updatedList = tasks.map((task: Task) => {
+            if(task.id === updatedTask.id) {
+                return {
+                    ...task,
+                    text: updatedTask.text,
+                    color: updatedTask.color,
+                    editedAt: Date.now()
+                }
+            }
+            return task;
+        });
         setTasks(updatedList);
         await AsyncStorage.setItem('tasks', JSON.stringify(updatedList));
         setIsEditVisible(false);
@@ -108,14 +173,8 @@ const HomeScreen: React.FC = () => {
     }
 
     const deleteTask = (id: string) => {
-        Alert.alert(
-            'Eliminar tarea',
-            '¿Estás seguro que deseas eliminar esta nota?',
-            [
-                {
-                    text: 'Cancelar',
-                    style: 'cancel',
-                },
+        Alert.alert('Eliminar tarea','¿Estás seguro que deseas eliminar esta nota?', [
+                {text: 'Cancelar', style: 'cancel'},
                 {
                     text: 'Eliminar',
                     style: 'destructive',
@@ -141,22 +200,20 @@ const HomeScreen: React.FC = () => {
         }
     }
 
+    // Analizar si hay que dejar o eliminar
     const setCaretToStart = () => {
         inputRef.current?.setNativeProps({ selection: { start: 0, end: 0}});
     }
 
-
     const renderItem = ({ item, drag, isActive }: RenderItemParams<Task>) => (
-        <>
-            <TaskItem
-                task={item}
-                onToggle={toggleTask}
-                onDelete={deleteTask}
-                onEdit={() => handleEdit(item)}
-                drag={drag}
-                isActive={isActive}
-            />
-        </>
+        <TaskItem
+            task={item}
+            onToggle={toggleTask}
+            onDelete={deleteTask}
+            onEdit={() => handleEdit(item)}
+            drag={drag}
+            isActive={isActive}
+        />
     );
 
     return(
@@ -178,9 +235,20 @@ const HomeScreen: React.FC = () => {
                     onFocus={() => setCaretToStart()}
                     ref = {inputRef}
                 />
+                <TouchableOpacity
+                    onPress={isRecording ? stopRecording : startRecording}
+                    style={{marginRight: 6}}
+                >
+                    <Ionicons
+                        name={isRecording ? 'stop' : 'mic'}
+                        size={26}
+                        color={isRecording ? 'red' : colors.text}
+                    />
+                </TouchableOpacity>
                 <Button
                     title='Agregar'
-                    onPress={addTask}/>
+                    onPress={() => addTask()}
+                />
             </View>
 
             <View style = {styles.colorContainer}>
@@ -206,10 +274,10 @@ const HomeScreen: React.FC = () => {
 
             <View style = {styles.listContainer}>
                 <DraggableFlatList
-                    data={tasks}
+                    data={tasks.filter(Boolean)}
                     keyExtractor={(item) => item.id}
                     renderItem={renderItem}
-                    onDragEnd={({data}) => setTasks(data)}
+                    onDragEnd={({data}) => setTasks(data.filter(Boolean))}
                     ListEmptyComponent={
                         <Text style={styles.emptyText}>
                             Todavía no hay tareas cargadas, agrega una nueva tarea!
