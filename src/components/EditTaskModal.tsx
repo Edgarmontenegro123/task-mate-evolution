@@ -121,7 +121,6 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>['colors']) =>
         },
         title: {
             fontSize: 20,
-            fontWeight: 'bold',
             marginBottom: 10,
             textAlign: 'center',
         },
