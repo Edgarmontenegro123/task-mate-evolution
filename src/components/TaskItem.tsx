@@ -54,16 +54,18 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onDelete, onEdit, d
 
                 <TouchableOpacity onPress={() => onEdit(task)}>
                     <Ionicons
-                        name='pencil'
+                        name='create-sharp'
                         size={28}
                         color='#8EC5FF'
+                        style={{ marginLeft: 10 }}
                     />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => onDelete(task.id)}>
                     <Ionicons
                         name='trash-outline'
                         size={28}
-                        color='#FFA1AD'
+                        color='#E7180B'
+                        style={{ marginLeft: 5 }}
                     />
                 </TouchableOpacity>
             </TouchableOpacity>
