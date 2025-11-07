@@ -200,11 +200,6 @@ const HomeScreen: React.FC = () => {
         }
     }
 
-    // Analizar si hay que dejar o eliminar
-    const setCaretToStart = () => {
-        inputRef.current?.setNativeProps({ selection: { start: 0, end: 0}});
-    }
-
     const renderItem = ({ item, drag, isActive }: RenderItemParams<Task>) => (
         <TaskItem
             task={item}
@@ -232,7 +227,6 @@ const HomeScreen: React.FC = () => {
                         const newHeight = e.nativeEvent.contentSize.height;
                         setInputHeight(Math.min(newHeight, 120))
                     }}
-                    onFocus={() => setCaretToStart()}
                     ref = {inputRef}
                 />
                 <TouchableOpacity
