@@ -9,6 +9,8 @@ type ThemeColors = {
     placeholder: string;
     headerBg: string;
     headerText: string;
+    modalBg: string;
+    primary: string;
 }
 
 export const useThemeColors = (): {
@@ -27,6 +29,8 @@ export const useThemeColors = (): {
             placeholder: '#71717B',
             headerBg: '#FFFFFF',
             headerText: '#111111',
+            modalBg: 'rgba(0,0,0,0.5)',
+            primary: '#1E90FF',
         },
         dark: {
             background: '#121212',
@@ -36,6 +40,8 @@ export const useThemeColors = (): {
             placeholder: '#F5F5F5',
             headerBg: '#1E90FF',
             headerText: '#FFFFFF',
+            modalBg: 'rgba(0,0,0,0.7)',
+            primary: '#1E90FF',
         }
     }
 
