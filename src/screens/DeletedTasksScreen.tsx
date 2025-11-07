@@ -7,9 +7,34 @@ import {Ionicons} from '@expo/vector-icons';
 import {Task} from '../types/task';
 import {RootStackParamList} from '../navigation/types';
 import { useThemeColors } from '../hooks/useThemeColors';
-import {NativeStackNavigationProp} from "@react-navigation/native-stack";
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 
 type DeletedTasksRouteProp = RouteProp<RootStackParamList, 'DeletedTasks'>;
+
+const AudioControl: React.FC<{ uri: string; color: string }> = ({ uri, color }) => {
+    const player = useAudioPlayer(uri, { downloadFirst: true });
+    const status = useAudioPlayerStatus(player);
+
+    const handlePlayPause = () => {
+        if (!uri || !player) return;
+        if (status?.playing) {
+            player.pause();
+        } else {
+            player.play();
+        }
+    };
+
+    return (
+        <TouchableOpacity onPress={handlePlayPause} style={{ marginLeft: 8 }}>
+            <Ionicons
+                name={status?.playing ? 'pause-circle' : 'play-circle'}
+                size={26}
+                color={color}
+            />
+        </TouchableOpacity>
+    );
+};
 
 const DeletedTasksScreen: React.FC = () => {
     const route = useRoute<DeletedTasksRouteProp>();
@@ -149,7 +174,7 @@ const DeletedTasksScreen: React.FC = () => {
                     isActive && styles(colors).activeItem,
                 ]}
             >
-                <View style={styles(colors).textWrapper}>
+                <View style={styles(colors).leftContent}>
                     <Text
                         style={[styles(colors).taskText, {color: item.color}]}
                         numberOfLines={3}
@@ -163,7 +188,10 @@ const DeletedTasksScreen: React.FC = () => {
                     </Text>
                 </View>
                 <View style={styles(colors).divider} />
-                <View style={styles(colors).actionsRow}>
+                <View style={styles(colors).rightContent}>
+                    {item.audioUri ? (
+                        <AudioControl uri={item.audioUri} color={colors.text} />
+                    ) : null}
                     <TouchableOpacity
                         onPress={() => handleRecoverPress(item.id)}
                     >
@@ -261,6 +289,15 @@ const styles = (colors: ReturnType<typeof useThemeColors>['colors']) =>
         flex: 1,
         backgroundColor: colors.background,
         padding: 16,
+    },
+    leftContent: {
+        flex: 1,
+        paddingRight: 10,
+    },
+    rightContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
     },
     title: {
         fontSize: 24,
