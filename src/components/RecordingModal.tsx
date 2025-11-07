@@ -42,7 +42,7 @@ const RecordingModal: React.FC<Props> = ({ visible, onStop, onCancel }) => {
                         </TouchableOpacity>
 
                         <TouchableOpacity onPress={onStop} style={styles.btn}>
-                            <Ionicons name='stop-circle' size={64} color='#1E90FF' />
+                            <Ionicons name='stop-circle' size={56} color='#1E90FF' />
                             <Text style={styles.btnLabel}>Detener</Text>
                         </TouchableOpacity>
                     </View>
