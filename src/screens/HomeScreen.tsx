@@ -18,6 +18,7 @@ import {
 } from 'expo-audio';
 
 import { LogBox } from 'react-native';
+import RecordingModal from "../components/RecordingModal";
 LogBox.ignoreLogs(['Non-serializable values were found in the navigation state']);
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
@@ -32,6 +33,7 @@ const HomeScreen: React.FC = () => {
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [isEditVisible, setIsEditVisible] = useState<boolean>(false);
     const [isRecording, setIsRecording] = useState<boolean>(false);
+    const [isRecordingVisible, setIsRecordingVisible] = useState<boolean>(false);
     const {theme, toggleTheme, colors} = useThemeColors();
     const styles = createStyles(colors);
 
@@ -122,6 +124,7 @@ const HomeScreen: React.FC = () => {
             await recorder.prepareToRecordAsync();
             await recorder.record();
             setIsRecording(true);
+            setIsRecordingVisible(true);
         } catch(err) {
             console.error('Error al iniciar la grabación: ', err);
         }
@@ -132,6 +135,7 @@ const HomeScreen: React.FC = () => {
             await recorder.stop();
             const uri = recorder.uri;
             setIsRecording(false);
+            setIsRecordingVisible(false);
 
             await setAudioModeAsync({
                 allowsRecording: false,
@@ -141,6 +145,25 @@ const HomeScreen: React.FC = () => {
             if(uri) addTask(uri);
         } catch (err) {
             console.error('Error al detener grabación: ', err);
+        }
+    }
+
+    const cancelRecording = async () => {
+        try {
+            if(isRecording) {
+                await recorder.stop();
+            }
+        } catch(e) {
+            console.error(e);
+        } finally {
+            setIsRecording(false);
+            setIsRecordingVisible(false);
+            try {
+                await setAudioModeAsync({
+                    allowsRecording: false,
+                    playsInSilentMode: true,
+                });
+            } catch {}
         }
     }
 
@@ -291,6 +314,11 @@ const HomeScreen: React.FC = () => {
                     }}
                 />
             </View>
+            <RecordingModal
+                visible={isRecordingVisible}
+                onStop={stopRecording}
+                onCancel={cancelRecording}
+            />
             <EditTaskModal
                 visible={isEditVisible}
                 task={selectedTask}
