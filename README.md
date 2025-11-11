@@ -56,6 +56,7 @@ Su objetivo es ofrecer una experiencia rápida, accesible y personalizable, idea
 - Nuevo **modal de grabación animado** (micrófono pulsante, temporizador, botones redondeados).
 - Cargar imágenes para completar notas.
 - Filtros y búsqueda de notas.
+- Agregar recordatorios.
 - Refinamiento visual (animaciones, tipografía, sombras suaves).
 - Sincronización en la nube (Firebase o Supabase).
 - Implementación de AI para Transcripción automática de notas de voz, Resúmenes inteligentes de notas (texto o voz) y Clasificación automática de notas (AI tags).
