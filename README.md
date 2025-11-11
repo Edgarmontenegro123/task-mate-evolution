@@ -63,6 +63,33 @@ Su objetivo es ofrecer una experiencia rápida, accesible y personalizable, idea
 
 ---
 
+## 🔩 Estructura de archivos
+
+TaskMateEvolution/
+│
+├── src/
+│   ├── screens/
+│   │   ├── HomeScreen.tsx
+│   │   ├── DeletedTasksScreen.tsx
+│   ├── components/
+│   │   ├── EditTaskModal.tsx
+│   │   ├── RecordingModal.tsx
+│   │   ├── TaskItem.tsx
+│   ├── hooks/
+│   │   ├── useThemeColors.ts
+│   ├── navigation/
+│   │   ├── types.ts
+│   ├── storage/
+│   │   ├── storage.ts
+│   ├── types/
+│   │   ├── task.ts
+│   └── context/
+│       ├── ThemeProvider.jsx/
+│       
+├── App.tsx
+├── package.json
+└── tsconfig.json
+
 ## ⚙️ Instalación y Ejecución
 
 ```bash
