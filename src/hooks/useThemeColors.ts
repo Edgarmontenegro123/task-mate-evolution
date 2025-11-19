@@ -29,7 +29,7 @@ export const useThemeColors = (): {
             placeholder: '#71717B',
             headerBg: '#FFFFFF',
             headerText: '#111111',
-            modalBg: 'rgba(0,0,0,0.5)',
+            modalBg: '#00000080',
             primary: '#1E90FF',
         },
         dark: {
@@ -40,7 +40,7 @@ export const useThemeColors = (): {
             placeholder: '#F5F5F5',
             headerBg: '#1E90FF',
             headerText: '#FFFFFF',
-            modalBg: 'rgba(0,0,0,0.7)',
+            modalBg: '#000000B3',
             primary: '#1E90FF',
         }
     }
