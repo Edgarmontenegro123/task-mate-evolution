@@ -378,7 +378,7 @@ const styles = (colors: ReturnType<typeof useThemeColors>['colors']) =>
     },
     overlay: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
+        backgroundColor: '#00000080',
         justifyContent: 'center',
         alignItems: 'center',
     },
