@@ -43,7 +43,6 @@ const HomeScreen: React.FC = () => {
 
     const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
 
-
     useLayoutEffect(() => {
         navigation.setOptions({
             headerRight: () => (
@@ -74,20 +73,6 @@ const HomeScreen: React.FC = () => {
             void loadData();
         }, [])
     );
-
-    /*useEffect(() => {
-        const loadData = async () => {
-            try {
-                const savedTasks = await AsyncStorage.getItem('tasks');
-                const savedDeleted = await AsyncStorage.getItem('deletedTasks');
-                if(savedTasks) setTasks(JSON.parse(savedTasks));
-                if(savedDeleted) setDeletedTasks(JSON.parse(savedDeleted));
-            } catch (error) {
-                console.error('Error al cargar datos: ', error);
-            }
-        }
-        loadData();
-    }, []);*/
 
     useEffect(() => {
         const saveData = async () => {
