@@ -1,8 +1,8 @@
-import React, {useState, useEffect, useCallback, useLayoutEffect} from 'react';
+import React, {useState, useCallback, useLayoutEffect} from 'react';
 import {View, Text, StyleSheet, Alert, TouchableOpacity, Modal} from 'react-native';
 import DraggableFlatList, {RenderItemParams} from 'react-native-draggable-flatlist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
+import {RouteProp, useRoute, useNavigation, useFocusEffect} from '@react-navigation/native';
 import {Ionicons} from '@expo/vector-icons';
 import {Task} from '../types/task';
 import {RootStackParamList} from '../navigation/types';
@@ -39,13 +39,47 @@ const AudioControl: React.FC<{ uri: string; color: string }> = ({ uri, color }) 
 const DeletedTasksScreen: React.FC = () => {
     const route = useRoute<DeletedTasksRouteProp>();
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-    const initialDeletedTasks = route.params?.deletedTasks || [];
     const onRecover = route.params?.onRecover;
-    const [deletedTasks, setDeletedTasks] = useState<Task[]>(initialDeletedTasks);
+    const {theme, toggleTheme, colors} = useThemeColors();
+    const [deletedTasks, setDeletedTasks] = useState<Task[]>([]);
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [isPreviewVisible, setIsPreviewVisible] = useState<boolean>(false);
 
-    const {theme, toggleTheme, colors} = useThemeColors();
+    const loadDeletedTasks = useCallback(async () => {
+        try {
+            const savedDeleted = await AsyncStorage.getItem('deletedTasks');
+            if(savedDeleted) {
+                const parsed = JSON.parse(savedDeleted);
+                const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
+                const now = Date.now();
+                const filtered = parsed.filter(
+                    (t: Task) => !t.deletedAt || now - t.deletedAt < THIRTY_DAYS
+                );
+                setDeletedTasks(filtered);
+                await AsyncStorage.setItem('deletedTasks', JSON.stringify(filtered));
+            }
+            else {
+            setDeletedTasks([]);
+            }
+        } catch (error) {
+            console.error('Error al cargar notas eliminadas: ', error);
+        }
+    }, []);
+
+    const persist = useCallback(async (data: Task[]) => {
+        try {
+            await AsyncStorage.setItem('deletedTasks', JSON.stringify(data));
+            setDeletedTasks(data);
+        } catch (error) {
+            console.error('Error al guardar notas eliminadas: ', error);
+        }
+    }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            void loadDeletedTasks();
+        }, [loadDeletedTasks])
+    );
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -64,95 +98,57 @@ const DeletedTasksScreen: React.FC = () => {
         });
     }, [navigation, theme, colors, toggleTheme]);
 
-    useEffect(() => {
-        const loadDeletedFromStorage = async () => {
-            try {
-                if (initialDeletedTasks.length === 0) {
-                    const savedDeleted = await AsyncStorage.getItem('deletedTasks');
-                    if (savedDeleted) {
-                        const parsed = JSON.parse(savedDeleted);
-                        const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
-                        const now = Date.now();
-                        const filtered = parsed.filter(
-                            (t: Task) => !t.deletedAt || now - t.deletedAt < THIRTY_DAYS
-                        );
-                        setDeletedTasks(filtered);
-                        await AsyncStorage.setItem('deletedTasks', JSON.stringify(filtered));
-                    }
-                } else {
-                    setDeletedTasks(initialDeletedTasks);
-                }
-            } catch (error) {
-                console.error('Error al cargar notas eliminadas: ', error);
-            }
-        }
-        loadDeletedFromStorage();
-    }, [initialDeletedTasks]);
+    const handleRecoverPress = useCallback(
+        async (id: string) => {
+            const taskToRecover = deletedTasks.find((t) => t.id === id);
+            if (!taskToRecover) return;
 
-    const persist = useCallback(async (data: Task[]) => {
-        try {
-            await AsyncStorage.setItem('deletedTasks', JSON.stringify(data));
-        } catch (error) {
-            console.error('Error al cargar notas eliminadas: ', error);
-        }
-    }, []);
+            Alert.alert(
+                'Recuperar nota',
+                `Deseas recuperar la nota "${taskToRecover.text}"?`,
+                [
+                    { text: 'Cancelar', style: 'cancel' },
+                    {
+                        text: 'Recuperar',
+                        onPress: async () => {
+                            if (onRecover) onRecover(id);
+                            const updated = deletedTasks.filter((t) => t.id !== id);
+                            await persist(updated);
+                            await loadDeletedTasks();
+                        },
+                    },
+                ],
+                { cancelable: true }
+            );
+        },
+        [deletedTasks, persist, onRecover, loadDeletedTasks]
+    );
 
-    const handleRecoverPress = async (id: string) => {
-        const taskToRecover = deletedTasks.find((t) => t.id === id);
-        if (!taskToRecover) return;
+    const handlePermanentDelete = useCallback(
+        async (id: string) => {
+            const taskToDelete = deletedTasks.find((t) => t.id === id);
+            if (!taskToDelete) return;
 
-        Alert.alert(
-            'Recuperar nota',
-            `Deseas recuperar la nota "${taskToRecover.text}"?`,
-            [
-                {
-                    text: 'Cancelar',
-                    style: 'cancel',
-                },
-                {
-                    text: 'Recuperar',
-                    onPress: async () => {
-                        if (onRecover) {
-                            onRecover(id);
-                        }
-                        const updatedDeleted = deletedTasks.filter(t => t.id !== id);
-                        setDeletedTasks(updatedDeleted);
-                        await persist(updatedDeleted);
-
-                        try {
-                            await AsyncStorage.setItem('deletedTasks', JSON.stringify(updatedDeleted));
-                        } catch (error) {
-                            console.error('Error al guardar deletedTasks: ', error);
-                        }
-                    }
-                }
-            ],
-            {cancelable: true}
-        )
-    }
-
-    const handlePermanentDelete = async (id: string) => {
-        const taskToDelete = deletedTasks.find((t) => t.id === id);
-        if (!taskToDelete) return;
-
-        Alert.alert(
-            'Eliminar definitivamente',
-            `Esta acción no se puede deshacer.\n¿Eliminar la nota "${taskToDelete.text}"?`,
-            [
-                {text: 'Cancelar', style: 'cancel'},
-                {
-                    text: 'Eliminar',
-                    style: 'destructive',
-                    onPress: async () => {
-                        const updated = deletedTasks.filter(t => t.id !== id);
-                        setDeletedTasks(updated);
-                        await persist(updated);
-                    }
-                }
-            ],
-            {cancelable: true}
-        )
-    }
+            Alert.alert(
+                'Eliminar definitivamente',
+                `Esta acción no se puede deshacer.\n¿Eliminar la nota "${taskToDelete.text}"?`,
+                [
+                    { text: 'Cancelar', style: 'cancel' },
+                    {
+                        text: 'Eliminar',
+                        style: 'destructive',
+                        onPress: async () => {
+                            const updated = deletedTasks.filter((t) => t.id !== id);
+                            await persist(updated);
+                            await loadDeletedTasks();
+                        },
+                    },
+                ],
+                { cancelable: true }
+            );
+        },
+        [deletedTasks, persist, loadDeletedTasks]
+    );
 
     const renderItem = ({item, drag, isActive}: RenderItemParams<Task>) => {
         const now = Date.now();
@@ -226,7 +222,7 @@ const DeletedTasksScreen: React.FC = () => {
                 renderItem={renderItem}
                 onDragEnd={({data}) => {
                     setDeletedTasks(data);
-                    persist(data);
+                    void persist(data);
                 }}
                 contentContainerStyle={styles(colors).listContent}
                 ListEmptyComponent={
@@ -254,7 +250,7 @@ const DeletedTasksScreen: React.FC = () => {
                             <TouchableOpacity
                                 style={[styles(colors).outlineBtn, {borderColor: selectedTask?.color}]}
                                 onPress={() => {
-                                    if(selectedTask) handleRecoverPress(selectedTask.id);
+                                    if(selectedTask) void handleRecoverPress(selectedTask.id);
                                     setIsPreviewVisible(false);
                                 }}
                                 >
@@ -263,7 +259,7 @@ const DeletedTasksScreen: React.FC = () => {
                             <TouchableOpacity
                                 style={styles(colors).dangerBtn}
                                 onPress={() => {
-                                    if(selectedTask) handlePermanentDelete(selectedTask.id);
+                                    if(selectedTask) void handlePermanentDelete(selectedTask.id);
                                     setIsPreviewVisible(false);
                                 }}
                                 >

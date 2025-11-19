@@ -1,8 +1,8 @@
-import React, {useState, useEffect, useRef, useLayoutEffect} from 'react';
+import React, {useState, useEffect, useRef, useLayoutEffect, useCallback} from 'react';
 import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import TaskItem from '../components/TaskItem';
 import {Task} from '../types/task';
@@ -18,7 +18,7 @@ import {
 } from 'expo-audio';
 
 import { LogBox } from 'react-native';
-import RecordingModal from "../components/RecordingModal";
+import RecordingModal from '../components/RecordingModal';
 LogBox.ignoreLogs(['Non-serializable values were found in the navigation state']);
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
@@ -57,8 +57,23 @@ const HomeScreen: React.FC = () => {
         });
     }, [navigation, theme, colors, toggleTheme]);
 
+    useFocusEffect(
+        useCallback(() => {
+            const loadData = async () => {
+                try {
+                    const savedTasks = await AsyncStorage.getItem('tasks');
+                    const savedDeleted = await AsyncStorage.getItem('deletedTasks');
+                    if(savedTasks) setTasks(JSON.parse(savedTasks));
+                    if(savedDeleted) setDeletedTasks(JSON.parse(savedDeleted));
+                } catch (error) {
+                    console.error('Error al cargar datos: ', error);
+                }
+            };
+            void loadData();
+        }, [])
+    );
 
-    useEffect(() => {
+    /*useEffect(() => {
         const loadData = async () => {
             try {
                 const savedTasks = await AsyncStorage.getItem('tasks');
@@ -70,7 +85,7 @@ const HomeScreen: React.FC = () => {
             }
         }
         loadData();
-    }, []);
+    }, []);*/
 
     useEffect(() => {
         const saveData = async () => {
@@ -81,7 +96,7 @@ const HomeScreen: React.FC = () => {
                 console.error('Error al guardar datos: ', error);
             }
         }
-        saveData();
+        void saveData();
     }, [tasks, deletedTasks]);
 
 
@@ -150,9 +165,7 @@ const HomeScreen: React.FC = () => {
 
     const cancelRecording = async () => {
         try {
-            if(isRecording) {
-                await recorder.stop();
-            }
+            if(isRecording) await recorder.stop();
         } catch(e) {
             console.error(e);
         } finally {
@@ -308,7 +321,6 @@ const HomeScreen: React.FC = () => {
                     title = 'Ver notas eliminadas.'
                     onPress = {() => {
                         navigation.navigate('DeletedTasks', {
-                            deletedTasks,
                             onRecover: handleRecoverTask,
                         })
                     }}
