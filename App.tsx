@@ -14,7 +14,6 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
   // @ts-ignore
-    // @ts-ignore
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
           <ThemeProvider>
