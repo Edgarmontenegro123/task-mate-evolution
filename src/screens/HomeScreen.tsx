@@ -10,6 +10,7 @@ import {RootStackParamList} from '../navigation/types';
 import EditTaskModal from '../components/EditTaskModal';
 import {Ionicons} from '@expo/vector-icons';
 import {useThemeColors} from '../hooks/useThemeColors';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {
     useAudioRecorder,
     requestRecordingPermissionsAsync,
@@ -36,6 +37,7 @@ const HomeScreen: React.FC = () => {
     const [isRecordingVisible, setIsRecordingVisible] = useState<boolean>(false);
     const {theme, toggleTheme, colors} = useThemeColors();
     const styles = createStyles(colors);
+    const insets = useSafeAreaInsets();
 
     const navigation = useNavigation<HomeScreenNavigationProp>();
 
@@ -316,7 +318,7 @@ const HomeScreen: React.FC = () => {
                 />
             </View>
 
-            <View style = {styles.fixedButtonContainer}>
+            <View style = {[styles.fixedButtonContainer, {marginBottom: insets.bottom + 10}]}>
                 <Button
                     title = 'Ver notas eliminadas.'
                     onPress = {() => {
