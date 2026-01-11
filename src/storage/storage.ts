@@ -1,3 +1,4 @@
+/*
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Task } from '../types/task';
 
@@ -49,3 +50,4 @@ export const removeTaskFromStorage = async (id: string): Promise<Task[]> => {
     await saveTasks(newTasks);
     return newTasks;
 };
+*/

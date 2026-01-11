@@ -8,7 +8,7 @@ import DeletedTasksScreen from './src/screens/DeletedTasksScreen';
 import {ThemeProvider} from './src/context/ThemeProvider';
 import {RootStackParamList} from './src/navigation/types';
 // @ts-ignore
-import Logo from './assets/Logo_letra_negra.png';
+import Logo from './assets/Task_Mate_Evolution_Logo_Transparente_Letra_Negra.png';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -51,8 +51,8 @@ export default function App() {
 
 const styles = StyleSheet.create({
     logo: {
-        width: 140,
-        height: 40,
+        width: 200,
+        height: 100,
         resizeMode: 'contain'
     }
 })
