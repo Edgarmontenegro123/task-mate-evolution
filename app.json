@@ -4,7 +4,7 @@
     "slug": "task-mate-evolution",
     "version": "1.0.1",
     "orientation": "portrait",
-    "icon": "./assets/Task_Mate_Evolution_Icon.png",
+    "icon": "./assets/Icono_Task_Mate_Evolution.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -13,7 +13,7 @@
       "backgroundColor": "#ffffff"
     },
     "web": {
-      "favicon": "./assets/Task_Mate_Evolution_Icon.png"
+      "favicon": "./assets/Icono_Task_Mate_Evolution.png"
     },
     "plugins": [
       [
@@ -25,7 +25,7 @@
     ],
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/Task_Mate_Evolution_Icon.png",
+        "foregroundImage": "./assets/Icono_Task_Mate_Evolution.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
