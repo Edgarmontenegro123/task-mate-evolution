@@ -2,7 +2,7 @@
   "expo": {
     "name": "task-mate-evolution",
     "slug": "task-mate-evolution",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/Task_Mate_Evolution_Icon.png",
     "userInterfaceStyle": "light",
