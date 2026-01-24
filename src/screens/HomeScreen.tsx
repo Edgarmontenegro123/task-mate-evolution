@@ -50,9 +50,7 @@ const HomeScreen: React.FC = () => {
     const {theme, toggleTheme, colors} = useThemeColors();
     const styles = createStyles(colors);
     const insets = useSafeAreaInsets();
-
     const navigation = useNavigation<HomeScreenNavigationProp>();
-
     const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
 
     useLayoutEffect(() => {
