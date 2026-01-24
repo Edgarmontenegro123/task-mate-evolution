@@ -18,13 +18,25 @@ import {
     setAudioModeAsync
 } from 'expo-audio';
 
+import {
+    ensureNotifPermission,
+    scheduleOneReminder,
+    cancelReminder,
+} from '../utils/notifications';
+
+import {configureAndroidChannel}  from '../utils/notifications';
 import { LogBox } from 'react-native';
 import RecordingModal from '../components/RecordingModal';
-LogBox.ignoreLogs(['Non-serializable values were found in the navigation state']);
+LogBox.ignoreLogs(['Non-serializable values were found in the navigation state',
+                   'expo-notifications: Android push notifications (remote notifications)',
+]);
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
 const HomeScreen: React.FC = () => {
+    useEffect(() => {
+        void configureAndroidChannel();
+    }, []);
     const [tasks, setTasks] = useState<Task[]>([]);
     const [newTask, setNewTask] = useState('');
     const [selectedColor, setSelectedColor] = useState('#1E90FF');
@@ -64,7 +76,16 @@ const HomeScreen: React.FC = () => {
                 try {
                     const savedTasks = await AsyncStorage.getItem('tasks');
                     const savedDeleted = await AsyncStorage.getItem('deletedTasks');
-                    if(savedTasks) setTasks(JSON.parse(savedTasks));
+                    if(savedTasks) {
+                        const parsed: Task[] = JSON.parse(savedTasks);
+                        const now = Date.now();
+                        const cleaned = parsed.map((t) => ({
+                            ...t,
+                            reminders: (t.reminders ?? []).filter((r) => r.fireAt > now),
+                        }));
+                        setTasks(cleaned);
+                        await AsyncStorage.setItem('tasks', JSON.stringify(cleaned));
+                    }
                     if(savedDeleted) setDeletedTasks(JSON.parse(savedDeleted));
                 } catch (error) {
                     console.error('Error al cargar datos: ', error);
@@ -173,22 +194,79 @@ const HomeScreen: React.FC = () => {
     }
 
     const handleEdit = (task: Task) => {
-        setSelectedTask(task);
+        /*setSelectedTask(task);
+        setIsEditVisible(true);*/
+
+        const now = Date.now();
+        const cleanedTask = {
+            ...task,
+            reminders: (task.reminders ?? []).filter((r) =>r.fireAt >= now),
+        }
+        if ((task.reminders?.length ?? 0) !== (cleanedTask.reminders?.length ?? 0)) {
+            setTasks((prev) => {
+                const next = prev.map((t) => (t.id === task.id ? cleanedTask : t));
+                AsyncStorage.setItem('tasks', JSON.stringify(next)).catch(() => {});
+                return next;
+            });
+        }
+        setSelectedTask(cleanedTask);
         setIsEditVisible(true);
     }
 
     const handleSaveEdit = async (updatedTask: Task) => {
-        const updatedList = tasks.map((task: Task) => {
-            if(task.id === updatedTask.id) {
-                return {
-                    ...task,
-                    text: updatedTask.text,
-                    color: updatedTask.color,
-                    editedAt: Date.now()
+        const previous = tasks.find(t => t.id === updatedTask.id);
+
+        if(previous?.reminders?.length) {
+            for(const r of previous.reminders) {
+                if(r.notificationId) {
+                    await cancelReminder(r.notificationId);
                 }
             }
-            return task;
-        });
+        }
+
+        let nextReminders = updatedTask.reminders ?? [];
+
+        if(nextReminders.length > 0) {
+            const ok = await ensureNotifPermission();
+            if(!ok) {
+                Alert.alert(
+                    'Permiso requerido',
+                    'Debes habilitar notificaciones para usar recordatorios.'
+                );
+                nextReminders = [];
+            } else {
+                const scheduled = [];
+
+                for(const r of nextReminders) {
+                    if(r.fireAt <= Date.now() + 1000) continue;
+
+                    const notificationId = await scheduleOneReminder({
+                        title: 'Task Mate Evolution',
+                        body: updatedTask.text || '(nota de voz)',
+                        fireAt: r.fireAt,
+                    });
+
+                    scheduled.push({
+                        id: `${r.fireAt}`,
+                        fireAt: r.fireAt,
+                        notificationId,
+                    });
+                }
+
+                nextReminders = scheduled;
+            }
+        }
+
+        const updatedList = tasks.map((t) =>
+            t.id === updatedTask.id ? {
+            ...t,
+                text: updatedTask.text,
+                color: updatedTask.color,
+                editedAt: Date.now(),
+                reminders: nextReminders,
+            } : t
+        );
+
         setTasks(updatedList);
         await AsyncStorage.setItem('tasks', JSON.stringify(updatedList));
         setIsEditVisible(false);
@@ -203,10 +281,20 @@ const HomeScreen: React.FC = () => {
                     style: 'destructive',
                     onPress: () => {
                         const deleted = tasks.find(task => task.id === id);
+
                         if(deleted) {
+                            if(deleted.reminders?.length) {
+                                for (const r of deleted.reminders) {
+                                    if(r.notificationId) {
+                                        void cancelReminder(r.notificationId);
+                                    }
+                                }
+                            }
+
                             const deletedWithDate = {...deleted, deletedAt: Date.now()};
                             setDeletedTasks(prev => [deletedWithDate, ...prev])
                         }
+
                         setTasks(prev => prev.filter(task => task.id !== id));
                     }
                 }

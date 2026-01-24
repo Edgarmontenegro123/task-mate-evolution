@@ -2,13 +2,17 @@ import React from 'react';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {Image, StyleSheet} from 'react-native';
+import {Image, StyleSheet, LogBox} from 'react-native';
 import HomeScreen from './src/screens/HomeScreen';
 import DeletedTasksScreen from './src/screens/DeletedTasksScreen';
 import {ThemeProvider} from './src/context/ThemeProvider';
 import {RootStackParamList} from './src/navigation/types';
 // @ts-ignore
 import Logo from './assets/Task_Mate_Evolution_Logo_Transparente_Letra_Negra.png';
+
+LogBox.ignoreLogs([
+    'expo-notifications: Android Push notifications (remote notifications) functionality provided by expo-notifications was removed from Expo Go with the release of SDK 53. Use a development build instead of Expo Go.',
+]);
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 

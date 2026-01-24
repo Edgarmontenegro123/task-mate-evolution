@@ -10,7 +10,8 @@ import {
     Keyboard,
     KeyboardAvoidingView,
     Platform,
-    Animated
+    Animated,
+    Switch,
 } from 'react-native';
 import {Task} from '../types/task';
 import {useThemeColors} from '../hooks/useThemeColors';
@@ -27,17 +28,51 @@ const EditTaskModal: React.FC<Props> = ({visible, task, onSave, onCancel}) => {
     const {colors, theme} = useThemeColors();
     const [text, setText] = useState(task?.text || '');
     const [color, setColor] = useState(task?.color || '#ffffff');
+    const [remindersEnabled, setRemindersEnabled] = useState<boolean>(
+        !!task?.reminders?.length
+    );
+
+const [remindersDraft, setRemindersDraft] = useState<number[]>(
+    task?.reminders?.map((r) => r.fireAt) ?? []
+);
 
     useEffect(() => {
         if(task) {
             setText(task.text);
             setColor(task.color);
+
+            const fireAts = task.reminders?.map((r) => r.fireAt) ?? [];
+            setRemindersEnabled(fireAts.length > 0);
+            setRemindersDraft(fireAts);
         }
     }, [task]);
 
+    const addPreset = (fireAt: number) => {
+        setRemindersEnabled(true);
+        setRemindersDraft((prev) => {
+            const next = [...prev, fireAt].sort((a, b) => a - b);
+            return next;
+        });
+    };
+
+    const removeReminder = (fireAt: number) => {
+        setRemindersDraft((prev) => prev.filter((t) => t !== fireAt));
+    }
+
     const handleSave = () => {
         if(!task) return;
-        onSave({ ...task, text, color})
+        onSave({
+            ...task,
+            text,
+            color,
+            reminders: remindersEnabled
+            ? remindersDraft.map((fireAt) => ({
+                    id: `${fireAt}`,
+                    fireAt,
+                    notificationId: '',
+                }))
+                : [],
+        })
     }
 
     const styles = createStyles(colors);
@@ -70,7 +105,119 @@ const EditTaskModal: React.FC<Props> = ({visible, task, onSave, onCancel}) => {
                                     placeholderTextColor={
                                     theme === 'dark' ? '#CCCCCC' : '#555555'
                                     }
-                            />
+                                />
+                                <View style={{marginTop: 12}}>
+                                    <View
+                                        style = {{
+                                            flexDirection: 'row',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                        }}>
+                                        <Text style={{color: colors.text, fontSize: 16, fontWeight: '600'}}>
+                                            Recordatorios
+                                        </Text>
+                                        <Switch
+                                            value={remindersEnabled}
+                                            onValueChange={(v) => {
+                                                setRemindersEnabled(v);
+                                                if(!v) setRemindersDraft([]);
+                                            }}
+                                            trackColor={{
+                                                false: colors.border,
+                                                true: color,
+                                            }}
+                                            thumbColor={remindersEnabled ? color : '#9c9c9c'}
+                                            />
+                                    </View>
+                                    {remindersEnabled ? (
+                                        <View style={{marginTop: 10}}>
+                                            <View style={{flexDirection: 'row', gap: 8, flexWrap: 'wrap'}}>
+                                                <TouchableOpacity
+                                                    onPress={() => addPreset(Date.now() + 1 * 60 * 1000)}
+                                                    style={{
+                                                        paddingVertical: 8,
+                                                        paddingHorizontal: 10,
+                                                        borderRadius: 8,
+                                                        borderWidth: 1,
+                                                        borderColor: colors.border,
+                                                    }}
+                                                >
+                                                    <Text style={{ color: colors.text }}>+1 min</Text>
+                                                </TouchableOpacity>
+
+                                                <TouchableOpacity
+                                                    onPress={() => addPreset(Date.now() + 10 * 60 * 1000)}
+                                                    style = {{
+                                                        paddingVertical: 8,
+                                                        paddingHorizontal: 10,
+                                                        borderRadius: 8,
+                                                        borderWidth: 1,
+                                                        borderColor: colors.border,
+                                                    }}
+                                                    >
+                                                    <Text style={{color: colors.text}} >+ 10 min</Text>
+                                                </TouchableOpacity>
+                                                <TouchableOpacity
+                                                    onPress={() => addPreset(Date.now() + 60 * 60 * 1000)}
+                                                    style = {{
+                                                        paddingVertical: 8,
+                                                        paddingHorizontal: 10,
+                                                        borderRadius: 8,
+                                                        borderWidth: 1,
+                                                        borderColor: colors.border,
+                                                    }}
+                                                    >
+                                                    <Text style={{
+                                                        color: colors.text,
+                                                    }}>+1 h</Text>
+                                                </TouchableOpacity>
+                                                <TouchableOpacity
+                                                    onPress={() => {
+                                                        const d = new Date();
+                                                        d.setDate(d.getDate() + 1);
+                                                        d.setHours(9, 0, 0, 0);
+                                                        addPreset(d.getTime());
+                                                    }}
+                                                    style={{
+                                                        paddingVertical: 8,
+                                                        paddingHorizontal: 10,
+                                                        borderRadius: 8,
+                                                        borderWidth: 1,
+                                                        borderColor: colors.border,
+                                                    }}
+                                                >
+                                                    <Text style={{ color: colors.text }}>Mañana 09:00</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                            {remindersDraft.length > 0 ? (
+                                                <View style={{ marginTop: 10 }}>
+                                                    {remindersDraft.map((t) => (
+                                                        <View
+                                                            key={t}
+                                                            style={{
+                                                                flexDirection: 'row',
+                                                                justifyContent: 'space-between',
+                                                                alignItems: 'center',
+                                                                marginTop: 6,
+                                                            }}
+                                                        >
+                                                            <Text style={{ color: colors.text }}>
+                                                                {new Date(t).toLocaleString()}
+                                                            </Text>
+                                                            <TouchableOpacity onPress={() => removeReminder(t)} style={{ padding: 6 }}>
+                                                                <Text style={{ color: '#E7180B', fontWeight: '700' }}>Eliminar</Text>
+                                                            </TouchableOpacity>
+                                                        </View>
+                                                    ))}
+                                                </View>
+                                            ) : (
+                                                <Text style={{ marginTop: 8, color: colors.placeholder }}>
+                                                    No hay recordatorios configurados.
+                                                </Text>
+                                            )}
+                                        </View>
+                                    ) : null}
+                                </View>
                             </ScrollView>
                             <View style={styles.colorRow}>
                                 {['#FF6347', '#1E90FF', '#32CD32', '#FFD700', '#FF69B4'].map((color) => (

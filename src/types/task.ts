@@ -1,3 +1,9 @@
+export type TaskReminder = {
+    id: string;
+    fireAt: number;
+    notificationId: string;
+}
+
 export type Task = {
     id: string;
     text: string;
@@ -8,4 +14,5 @@ export type Task = {
     audioUri?: string;
     deletedAt?: number;
     editedAt?: number;
+    reminders?: TaskReminder[];
 };
