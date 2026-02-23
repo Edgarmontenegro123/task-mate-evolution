@@ -13,7 +13,14 @@
       "backgroundColor": "#ffffff"
     },
     "web": {
-      "favicon": "./assets/Icono_Task_Mate_Evolution.png"
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/Icono_Task_Mate_Evolution.png",
+      "name": "Task Mate Evolution",
+      "shortName": "TaskMate",
+      "display": "standalone",
+      "themeColor": "#ffffff",
+      "backgroundColor": "#ffffff"
     },
     "plugins": [
       [
