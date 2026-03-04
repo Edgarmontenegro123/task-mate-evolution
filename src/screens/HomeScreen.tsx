@@ -1,7 +1,7 @@
 import React, {useState, useEffect, useRef, useLayoutEffect, useCallback} from 'react';
 import DraggableFlatList, {RenderItemParams} from 'react-native-draggable-flatlist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity, Platform, FlatList} from 'react-native';
+import {View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity, Platform} from 'react-native';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import TaskItem from '../components/TaskItem';
@@ -33,8 +33,6 @@ LogBox.ignoreLogs(['Non-serializable values were found in the navigation state',
 ]);
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
-
-const BUILD_STAMP = '2026-03-03_23-45';
 
 const HomeScreen: React.FC = () => {
     useEffect(() => {
@@ -110,7 +108,7 @@ const HomeScreen: React.FC = () => {
         void saveData();
     }, [tasks, deletedTasks]);
 
-    useEffect(() => {
+    /*useEffect(() => {
         if (Platform.OS !== 'web') return;
 
         const interval = setInterval(() => {
@@ -147,7 +145,7 @@ const HomeScreen: React.FC = () => {
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [tasks]);
+    }, [tasks]);*/
 
 
     const addTask = (audioUri?: string) => {
@@ -290,7 +288,7 @@ const HomeScreen: React.FC = () => {
             return;
         }
 
-        if (Platform.OS === 'web') {
+        /*if (Platform.OS === 'web') {
             Alert.alert(
                 'No disponible en web',
                 'Los recordatorios funcionan solo en Android / IOS. En PWA no se pueden programar notificaciones.'
@@ -319,7 +317,7 @@ const HomeScreen: React.FC = () => {
             setIsEditVisible(false);
             setSelectedTask(null);
             return;
-        }
+        }*/
 
         const ok = await ensureNotifPermission();
         console.log('[handleSaveEdit] notif permission: ', ok);
@@ -409,11 +407,11 @@ const HomeScreen: React.FC = () => {
             setTasks(prev => prev.filter(task => task.id !== id));
         }
 
-        if (Platform.OS === 'web') {
+        /*if (Platform.OS === 'web') {
             const ok = window.confirm('¿Estás seguro que deseas eliminar esta nota?');
             if (ok) doDelete();
             return;
-        }
+        }*/
 
         Alert.alert(
             'Eliminar tarea',
@@ -447,11 +445,6 @@ const HomeScreen: React.FC = () => {
 
     return (
         <View style={styles.container}>
-            {Platform.OS === 'web' ? (
-                <Text style={{fontSize: 12, opacity: 0.6, marginBottom: 6}}>
-                    WEB BUILD: {BUILD_STAMP}
-                </Text>
-            ) : null}
             {Platform.OS === 'web' && webReminderVisible ? (
                 <View style={styles.webBanner}>
                     <View style={{flex: 1}}>
@@ -525,26 +518,6 @@ const HomeScreen: React.FC = () => {
             </View>
 
             <View style={styles.listContainer}>
-                {Platform.OS === 'web' ? (
-                    <FlatList
-                        data={tasks.filter(Boolean)}
-                        keyExtractor={(item) => item.id}
-                        renderItem={({item}) => (
-                            <TaskItem
-                                task={item}
-                                onToggle={toggleTask}
-                                onDelete={deleteTask}
-                                onEdit={() => handleEdit(item)}
-                                // sin drag en web
-                            />
-                        )}
-                        ListEmptyComponent={
-                            <Text style={styles.emptyText}>
-                                Todavía no hay tareas cargadas, agrega una nueva tarea!
-                            </Text>
-                        }
-                    />
-                ) : (
                     <DraggableFlatList
                         data={tasks.filter(Boolean)}
                         keyExtractor={(item) => item.id}
@@ -558,7 +531,6 @@ const HomeScreen: React.FC = () => {
                             </Text>
                         }
                     />
-                )}
             </View>
 
             <View style={[styles.fixedButtonContainer, {marginBottom: insets.bottom + 10}]}>
