@@ -28,7 +28,9 @@
         {
           "microphonePermission": "Permitir que Task Mate Evolution grabe audio para tus notas de voz."
         }
-      ]
+      ],
+      "expo-font",
+      "expo-asset"
     ],
     "android": {
       "adaptiveIcon": {
