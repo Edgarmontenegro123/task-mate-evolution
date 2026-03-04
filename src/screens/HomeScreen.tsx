@@ -1,7 +1,7 @@
 import React, {useState, useEffect, useRef, useLayoutEffect, useCallback} from 'react';
 import DraggableFlatList, {RenderItemParams} from 'react-native-draggable-flatlist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity, Platform} from 'react-native';
+import {View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity, Platform, FlatList} from 'react-native';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import TaskItem from '../components/TaskItem';
@@ -116,10 +116,10 @@ const HomeScreen: React.FC = () => {
         const interval = setInterval(() => {
             const now = Date.now();
 
-            let due: {taskId: string; fireAt: number; text: string} | null = null;
+            let due: { taskId: string; fireAt: number; text: string } | null = null;
 
             for (const t of tasks) {
-                for(const r of t.reminders ?? []) {
+                for (const r of t.reminders ?? []) {
                     if (r.fireAt <= now) {
                         due = {taskId: t.id, fireAt: r.fireAt, text: t.text};
                         break;
@@ -138,9 +138,10 @@ const HomeScreen: React.FC = () => {
             setTasks((prev) =>
                 prev.map((t) =>
                     t.id !== due!.taskId
-                    ? t
-                        : {...t, reminders: (t.reminders ?? []).filter((r) => r.fireAt !== due!.fireAt),
-                    }
+                        ? t
+                        : {
+                            ...t, reminders: (t.reminders ?? []).filter((r) => r.fireAt !== due!.fireAt),
+                        }
                 )
             );
         }, 1000);
@@ -447,7 +448,7 @@ const HomeScreen: React.FC = () => {
     return (
         <View style={styles.container}>
             {Platform.OS === 'web' ? (
-                <Text style={{ fontSize: 12, opacity: 0.6, marginBottom: 6 }}>
+                <Text style={{fontSize: 12, opacity: 0.6, marginBottom: 6}}>
                     WEB BUILD: {BUILD_STAMP}
                 </Text>
             ) : null}
@@ -524,19 +525,40 @@ const HomeScreen: React.FC = () => {
             </View>
 
             <View style={styles.listContainer}>
-                <DraggableFlatList
-                    data={tasks.filter(Boolean)}
-                    keyExtractor={(item) => item.id}
-                    renderItem={renderItem}
-                    onDragEnd={({data}) => setTasks(data.filter(Boolean))}
-                    activationDistance={Platform.OS === 'android' ? 16 : 1}
-                    dragItemOverflow
-                    ListEmptyComponent={
-                        <Text style={styles.emptyText}>
-                            Todavía no hay tareas cargadas, agrega una nueva tarea!
-                        </Text>
-                    }
-                />
+                {Platform.OS === 'web' ? (
+                    <FlatList
+                        data={tasks.filter(Boolean)}
+                        keyExtractor={(item) => item.id}
+                        renderItem={({item}) => (
+                            <TaskItem
+                                task={item}
+                                onToggle={toggleTask}
+                                onDelete={deleteTask}
+                                onEdit={() => handleEdit(item)}
+                                // sin drag en web
+                            />
+                        )}
+                        ListEmptyComponent={
+                            <Text style={styles.emptyText}>
+                                Todavía no hay tareas cargadas, agrega una nueva tarea!
+                            </Text>
+                        }
+                    />
+                ) : (
+                    <DraggableFlatList
+                        data={tasks.filter(Boolean)}
+                        keyExtractor={(item) => item.id}
+                        renderItem={renderItem}
+                        onDragEnd={({data}) => setTasks(data.filter(Boolean))}
+                        activationDistance={Platform.OS === 'android' ? 16 : 1}
+                        dragItemOverflow
+                        ListEmptyComponent={
+                            <Text style={styles.emptyText}>
+                                Todavía no hay tareas cargadas, agrega una nueva tarea!
+                            </Text>
+                        }
+                    />
+                )}
             </View>
 
             <View style={[styles.fixedButtonContainer, {marginBottom: insets.bottom + 10}]}>
