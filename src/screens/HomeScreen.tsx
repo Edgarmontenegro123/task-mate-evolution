@@ -522,7 +522,7 @@ const HomeScreen: React.FC = () => {
                     keyExtractor={(item) => item.id}
                     renderItem={renderItem}
                     onDragEnd={({data}) => setTasks(data.filter(Boolean))}
-                    activationDistance={1}
+                    activationDistance={Platform.OS === 'android' ? 16 : 1}
                     dragItemOverflow
                     ListEmptyComponent={
                         <Text style={styles.emptyText}>
