@@ -34,6 +34,8 @@ LogBox.ignoreLogs(['Non-serializable values were found in the navigation state',
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
+const BUILD_STAMP = '2026-03-03_23-45';
+
 const HomeScreen: React.FC = () => {
     useEffect(() => {
         void configureAndroidChannel();
@@ -444,6 +446,11 @@ const HomeScreen: React.FC = () => {
 
     return (
         <View style={styles.container}>
+            {Platform.OS === 'web' ? (
+                <Text style={{ fontSize: 12, opacity: 0.6, marginBottom: 6 }}>
+                    WEB BUILD: {BUILD_STAMP}
+                </Text>
+            ) : null}
             {Platform.OS === 'web' && webReminderVisible ? (
                 <View style={styles.webBanner}>
                     <View style={{flex: 1}}>
